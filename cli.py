@@ -3,6 +3,9 @@ import click
 from api import api_start as api_start
 from cli_demo import main as cli_start
 from configs.model_config import llm_model_dict, embedding_model_dict
+from models import shared
+from models.loader import LoaderCheckPoint
+from models.loader.args import parser
 
 
 @click.group()
@@ -83,4 +86,9 @@ def start_webui():
     import webui
 
 
-cli()
+if __name__ == '__main__':
+    args = None
+    args = parser.parse_args()
+    args_dict = vars(args)
+    shared.loaderCheckPoint = LoaderCheckPoint(args_dict)
+    cli()

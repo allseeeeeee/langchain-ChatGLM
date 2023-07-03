@@ -16,13 +16,13 @@ embedding_model_dict = {
     "ernie-tiny": "nghuyong/ernie-3.0-nano-zh",
     "ernie-base": "nghuyong/ernie-3.0-base-zh",
     "text2vec-base": "shibing624/text2vec-base-chinese",
-    "text2vec": "GanymedeNil/text2vec-large-chinese",
+    "text2vec": "/home/dev/team/text2vec-large-chinese",
     "m3e-small": "moka-ai/m3e-small",
-    "m3e-base": "moka-ai/m3e-base",
+    "m3e-base": "/home/dev/team/m3e-base",
 }
 
 # Embedding model name
-EMBEDDING_MODEL = "text2vec"
+EMBEDDING_MODEL = "m3e-base"
 
 # Embedding running device
 EMBEDDING_DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
@@ -43,7 +43,7 @@ llm_model_dict = {
     "chatglm-6b-int4": {
         "name": "chatglm-6b-int4",
         "pretrained_model_name": "THUDM/chatglm-6b-int4",
-        "local_model_path": None,
+        "local_model_path": "/home/dev/team/chatglm-6b-int4",
         "provides": "ChatGLM"
     },
     "chatglm-6b-int8": {
@@ -64,7 +64,12 @@ llm_model_dict = {
         "local_model_path": None,
         "provides": "ChatGLM"
     },
-
+    "chatglm2-6b-int4": {
+        "name": "chatglm2-6b-int4",
+        "pretrained_model_name": "THUDM/chatglm2-6b-int4",
+        "local_model_path": "/home/dev/team/chatglm2-6b-int4",
+        "provides": "ChatGLM"
+    },
     "chatyuan": {
         "name": "chatyuan",
         "pretrained_model_name": "ClueAI/ChatYuan-large-v2",
@@ -111,7 +116,7 @@ llm_model_dict = {
 }
 
 # LLM 名称
-LLM_MODEL = "chatglm-6b"
+LLM_MODEL = "chatglm2-6b-int4"
 # 量化加载8bit 模型
 LOAD_IN_8BIT = False
 # Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.
