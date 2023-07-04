@@ -56,7 +56,7 @@ if __name__ == '__main__':
     llm_model_ins = shared.loaderLLM(params=args_dict)
     llm_model_ins.set_history_len(LLM_HISTORY_LEN)
     local_doc_qa = LocalDocQA()
-    local_doc_qa.init_cfg(llm_model=llm_model_ins)
+    local_doc_qa.init_cfg(llm_model=llm_model_ins, embedding_model_path='/home/dev/team/m3e-base')
 
     result_data = db.get_collection("hsp_hospital").find_one({'organization_code': "5C6CC2CB199E0500010412CB"})
     # result_data = db.get_collection("hsp_hospital").find({'organization_code': "YY0000309218060"})

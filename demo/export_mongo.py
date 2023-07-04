@@ -70,7 +70,6 @@ def doc_hsp(hsp):
     {item(hsp, 'examination_notice_html', '体检注意事项')}
     {item(hsp, 'report_obtain_desc', '报告领取')}
     {item(hsp, 'days_of_generate_report', '报告出具天数')}
-    {item(hsp, 'examination_notice_html', '体检注意事项')}
     电子报告：{hsp['days_of_generate_digital_report'] + hsp['view_digital_report_url'] if hsp['have_digital_report'] else '不提供' }
     {item(hsp, 'intro', '简介')}
     """
