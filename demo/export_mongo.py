@@ -50,9 +50,7 @@ def export_hsp_set_meals(hsp_code: str = None, path: str = 'data'):
             setmeal_info = f"""
 套餐编码：{setmeal['code']} 套餐名称：{setmeal['name']} 套餐别名：{setmeal['alias']} 套餐价格：{setmeal['hsp_price']} 
   适用性别：{setmeal['gender']} 适用婚姻状态：{setmeal['marriage']} 适用年龄：{setmeal['fit_age']}
-  套餐标签：{setmeal['set_meal_cate_list']} 
   包含项目：{section_names} 
-  套餐介绍：{setmeal['description'] if 'description' in setmeal else '无'}
 """
             file_object.write(setmeal_info)
             file_object.write("\n")
@@ -61,22 +59,27 @@ def export_hsp_set_meals(hsp_code: str = None, path: str = 'data'):
 
 def doc_hsp(hsp):
     return f"""
-    类型：{hsp['hospital_type'] + '医院'}
-    级别：{hsp['primary_hsp_level']}{hsp['secondary_hsp_level']}
-    地址：{hsp['province']}{hsp['city']}{hsp['district']}{hsp['address']}
-    工作日：{hsp['work_day']}
-    {item(hsp, 'desc_of_work_time', '工作时间')} {item(hsp, 'reception_deadline_per_day', '最晚到院')}
-    {item(hsp, 'reserve_notice', '体检须知')}
-    {item(hsp, 'examination_notice_html', '体检注意事项')}
-    {item(hsp, 'report_obtain_desc', '报告领取')}
-    {item(hsp, 'days_of_generate_report', '报告出具天数')}
-    电子报告：{hsp['days_of_generate_digital_report'] + hsp['view_digital_report_url'] if hsp['have_digital_report'] else '不提供' }
-    {item(hsp, 'intro', '简介')}
-    """
+医院名称：{hsp['name']}
+医院类型：{hsp['hospital_type'] + '医院'}
+医院级别：{hsp['primary_hsp_level']}
+医院等次：{hsp['secondary_hsp_level']}
+医院类型：{hsp['hospital_type']}{hsp['primary_hsp_level']}{hsp['secondary_hsp_level']}
+医院类型：{hsp['hospital_type']}{str(hsp['primary_hsp_level']+("" if hsp['secondary_hsp_level'] is '未定等' else hsp['secondary_hsp_level'])).replace("级", "").replace("等", "")}
+医院地址：{hsp['province']}{hsp['city']}{hsp['district']}{hsp['address']}
+体检工作日：{hsp['work_day']}
+{item(hsp, 'desc_of_work_time', '工作时间')} {item(hsp, 'reception_deadline_per_day', '最晚到院时间')}
+{item(hsp, 'reserve_notice', '体检须知')}
+{item(hsp, 'examination_notice_html', '体检注意事项')}
+{item(hsp, 'report_obtain_desc', '报告领取')}
+{item(hsp, 'days_of_generate_report', '报告出具天数')}
+电子报告：{hsp['days_of_generate_digital_report'] + hsp['view_digital_report_url'] if hsp['have_digital_report'] else '不提供' }
+{item(hsp, 'intro', '医院简介')}
+"""
 
 
 def export_hsp_info(hsp_code: str = None, path: str = 'data'):
     result_data = db.get_collection("hsp_hospital").find_one({'organization_code': hsp_code})
+    print(doc_hsp(result_data))
     file = f'{path}/{hsp_code}_info.txt'
     with open(file, 'w', encoding='utf-8') as file_object:
         file_object.write(doc_hsp(result_data))
@@ -84,10 +87,10 @@ def export_hsp_info(hsp_code: str = None, path: str = 'data'):
 
 
 if __name__ == '__main__':
-    sys_tag = db.get_collection("hsp_hospital")
-    print(sys_tag.find_one({"organization_code": "5C6CC2CB199E0500010412CB"}))
+    # sys_tag = db.get_collection("hsp_hospital")
+    # print(sys_tag.find_one({"organization_code": "5C6CC2CB199E0500010412CB"}))
     # export_hospital_name()
-    export_hsp_info("5C6CC2CB199E0500010412CB")
+    # export_hsp_info("5C6CC2CB199E0500010412CB")
     export_hsp_set_meals("5C6CC2CB199E0500010412CB")
 
     pass
