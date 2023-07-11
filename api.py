@@ -14,13 +14,14 @@ from pydantic import BaseModel
 from typing_extensions import Annotated
 from starlette.responses import RedirectResponse
 
-from chains.local_doc_qa import LocalDocQA
+from chains.local_doc_qa import LocalDocQA, load_vector_store
 from configs.model_config import (KB_ROOT_PATH, EMBEDDING_DEVICE,
                                   EMBEDDING_MODEL, NLTK_DATA_PATH,
-                                  VECTOR_SEARCH_TOP_K, LLM_HISTORY_LEN, OPEN_CROSS_DOMAIN)
+                                  VECTOR_SEARCH_TOP_K, LLM_HISTORY_LEN, OPEN_CROSS_DOMAIN, PROMPT_TEMPLATE)
 import models.shared as shared
 from models.loader.args import parser
 from models.loader import LoaderCheckPoint
+from utils import torch_gc
 
 nltk.data.path = [NLTK_DATA_PATH] + nltk.data.path
 
@@ -117,6 +118,32 @@ async def upload_file(
     else:
         file_status = "文件上传失败，请重新上传"
         return BaseResponse(code=500, msg=file_status)
+
+
+async def reinit_kb(knowledge_base_id: str = Query(..., description="Knowledge Base Name", example="kb1")):
+    saved_path = get_folder_path(knowledge_base_id)
+    vs_path = get_vs_path(knowledge_base_id)
+    tmp_files = os.path.join(saved_path, 'tmp_files')
+    if os.path.exists(tmp_files):
+        shutil.rmtree(tmp_files)
+    local_doc_qa.init_knowledge_vector_store(saved_path, vs_path)
+    return BaseResponse(code=200, msg=f"成功重新初始化知识库{knowledge_base_id}")
+
+
+async def ref_kb(knowledge_base_id: str = Body(..., description="Knowledge Base Name", example="kb1"),
+                 query: str = Body(..., description="Question", example="hi")):
+    saved_path = get_folder_path(knowledge_base_id)
+    vs_path = get_vs_path(knowledge_base_id)
+    local_doc_qa.init_knowledge_vector_store(saved_path, vs_path)
+
+    vector_store = load_vector_store(vs_path, local_doc_qa.embeddings)
+    vector_store.chunk_size = local_doc_qa.chunk_size
+    vector_store.chunk_conent = local_doc_qa.chunk_conent
+    vector_store.score_threshold = local_doc_qa.score_threshold
+    related_docs_with_score = vector_store.similarity_search_with_score(query, k=local_doc_qa.top_k)
+    torch_gc()
+
+    return ListDocsResponse(data=related_docs_with_score)
 
 
 async def upload_files(
@@ -266,6 +293,7 @@ async def update_doc(
 async def local_doc_chat(
         knowledge_base_id: str = Body(..., description="Knowledge Base Name", example="kb1"),
         question: str = Body(..., description="Question", example="工伤保险是什么？"),
+        prompt_template: str = Body(default=PROMPT_TEMPLATE, description="PromptTemplate", example="已知信息：{context}\n问题是：{question}"),
         history: List[List[str]] = Body(
             [],
             description="History of previous questions and answers",
@@ -288,7 +316,7 @@ async def local_doc_chat(
         )
     else:
         for resp, history in local_doc_qa.get_knowledge_based_answer(
-                query=question, vs_path=vs_path, chat_history=history, streaming=True
+                query=question, vs_path=vs_path, chat_history=history, streaming=True, prompt_template=prompt_template
         ):
             pass
         source_documents = [
@@ -444,6 +472,8 @@ def api_start(host, port):
     app.delete("/local_doc_qa/delete_knowledge_base", response_model=BaseResponse)(delete_kb)
     app.delete("/local_doc_qa/delete_file", response_model=BaseResponse)(delete_doc)
     app.post("/local_doc_qa/update_file", response_model=BaseResponse)(update_doc)
+    app.post("/local_doc_qa/reinit_kb", response_model=BaseResponse)(reinit_kb)
+    app.post("/local_doc_qa/ref_kb", response_model=BaseResponse)(ref_kb)
 
     local_doc_qa = LocalDocQA()
     local_doc_qa.init_cfg(llm_model=llm_model_ins, embedding_model_path=args_dict.get('embedding_model_path', None))

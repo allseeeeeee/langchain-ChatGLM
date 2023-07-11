@@ -1,4 +1,8 @@
+import re
+
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
 from vectorstores import MyFAISS
 from langchain.document_loaders import UnstructuredFileLoader, TextLoader, CSVLoader
 from configs.model_config import *
@@ -64,6 +68,7 @@ def load_file(filepath, sentence_size=SENTENCE_SIZE, using_zh_title_enhance=ZH_T
     elif filepath.lower().endswith(".txt"):
         loader = TextLoader(filepath, autodetect_encoding=True)
         textsplitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
+        # textsplitter = RecursiveCharacterTextSplitter(separators=['\n\n'], chunk_size=sentence_size)
         docs = loader.load_and_split(textsplitter)
     elif filepath.lower().endswith(".pdf"):
         loader = UnstructuredPaddlePDFLoader(filepath)
@@ -229,7 +234,8 @@ class LocalDocQA:
             logger.error(e)
             return None, [one_title]
 
-    def get_knowledge_based_answer(self, query, vs_path, chat_history=[], streaming: bool = STREAMING):
+    def get_knowledge_based_answer(self, query, vs_path, chat_history=[], streaming: bool = STREAMING,
+                                   prompt_template: str = PROMPT_TEMPLATE):
         vector_store = load_vector_store(vs_path, self.embeddings)
         vector_store.chunk_size = self.chunk_size
         vector_store.chunk_conent = self.chunk_conent
@@ -237,7 +243,7 @@ class LocalDocQA:
         related_docs_with_score = vector_store.similarity_search_with_score(query, k=self.top_k)
         torch_gc()
         if len(related_docs_with_score) > 0:
-            prompt = generate_prompt(related_docs_with_score, query)
+            prompt = generate_prompt(related_docs_with_score, query, prompt_template)
         else:
             prompt = query
 
