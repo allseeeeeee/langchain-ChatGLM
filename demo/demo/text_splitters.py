@@ -1,4 +1,4 @@
-with open('data/untitled.txt') as f:
+with open('../data/untitled.txt') as f:
     doc = f.read()
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter

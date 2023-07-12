@@ -2,7 +2,7 @@ import numpy as np
 import gensim
 
 # 预处理好的文本数据集路径
-corpus_path = "data/corpus.txt"
+corpus_path = "../data/corpus.txt"
 
 # 加载文本数据集
 corpus_file = open(corpus_path, "r", encoding="utf-8")

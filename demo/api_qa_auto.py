@@ -20,7 +20,7 @@ PROMPT_TEMPLATE = """已知信息：
 如果无法从中得到答案，请说 “根据已知信息无法回答该问题”，不允许在答案中添加编造成分。 
 问题是：{question}"""
 
-client = pymongo.MongoClient("mongodb://root:password123@192.168.0.9:27017")
+client = pymongo.MongoClient(f"mongodb://{os.environ.get('usr+pwd')}@192.168.0.9:27017")
 db = client.get_database("hplus_platform")
 table = db.get_collection("00_chat_qa")
 

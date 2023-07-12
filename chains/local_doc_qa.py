@@ -247,7 +247,7 @@ class LocalDocQA:
         else:
             prompt = query
 
-        print(f"Q: {query}\n Ref: {related_docs_with_score}")
+        print(f"Q: {query}\n Ref: {related_docs_with_score}\nPrompt: {prompt}")
         for answer_result in self.llm.generatorAnswer(prompt=prompt, history=chat_history,
                                                       streaming=streaming):
             resp = answer_result.llm_output["answer"]

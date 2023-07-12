@@ -1,4 +1,6 @@
+import copy
 import json
+import os
 
 import pymongo
 import gradio as gr
@@ -6,7 +8,7 @@ import requests
 
 from api import get_file_path
 
-client = pymongo.MongoClient("mongodb://root:password123@192.168.0.9:27017")
+client = pymongo.MongoClient(f"mongodb://{os.environ.get('usr+pwd')}@192.168.0.9:27017")
 db = client.get_database("hplus_platform")
 table = db.get_collection("00_chat_qa")
 
@@ -56,7 +58,7 @@ def ref_kb(choice_hsp, question, *args, **kwargs):
     resp = requests.post("http://localhost:7861/local_doc_qa/ref_kb",
                          json={"knowledge_base_id": choice_hsp, "query": question}).json()
     print(choice_hsp, resp)
-    return "\n".join(resp.data), "修改成功"
+    return resp['msg'], "修改成功"
 
 
 def submit_qa(choice_hsp=None, question=None, prompt=None, *args, **kwargs):
@@ -79,37 +81,44 @@ def hsp_change(choice_hsp, *args, **kwargs):
     print(qa)
 
     return qa['prompt_template'], qa['question'], qa['response'], "\n\n".join(qa['source_documents']), \
-        f"当前问答：{qa_idx + 1} \n 总数：{qa_total}", f"切换医院{choice_hsp}成功", \
+        f"总数：{qa_total}", qa_idx + 1, f"切换医院{choice_hsp}成功", \
         read_file(get_file_path(choice_hsp, '医院信息.txt')), \
         read_file(get_file_path(choice_hsp, '套餐信息.txt'))
 
 
-def load_qa_prev(choice_hsp, *args, **kwargs):
+def load_qa(choice_hsp, qa_skip):
     global qa_idx, qa_total, qa
     qa_total = table.count_documents({"hsp_code": choice_hsp})
-    qa_idx -= 1
-    if qa_idx < 0:
-        qa_idx = 0
+    qa_idx = qa_idx if qa_skip >= 0 else 0
+    qa_idx = qa_total-1 if qa_skip >= qa_total-1 else qa_skip
 
     qa = table.find({"hsp_code": choice_hsp}).skip(qa_idx).limit(1)[0]
     print(qa)
 
     return qa['prompt_template'], qa['question'], qa['response'], "\n\n".join(qa['source_documents']), \
-        f"当前问答：{qa_idx + 1} \n 总数：{qa_total}", f"切换医院{choice_hsp}成功"
+        f"总数：{qa_total}", qa_idx + 1, f"加载成功"
+
+
+def refresh_qa(choice_hsp, *args, **kwargs):
+    global qa_idx
+    return load_qa(choice_hsp, qa_idx)
+
+
+def load_qa_jump(jump_to, choice_hsp, *args, **kwargs):
+    print('jump_to >> ', jump_to)
+    global qa_idx
+    qa_idx = int(jump_to)-1
+    return load_qa(choice_hsp, qa_idx)
+
+
+def load_qa_prev(choice_hsp, *args, **kwargs):
+    global qa_idx
+    return load_qa(choice_hsp, qa_idx-1)
 
 
 def load_qa_next(choice_hsp, *args, **kwargs):
-    global qa_idx, qa_total, qa
-    qa_total = table.count_documents({"hsp_code": choice_hsp})
-    qa_idx += 1
-    if qa_idx > qa_total:
-        qa_idx = qa_total
-
-    qa = table.find({"hsp_code": choice_hsp}).skip(qa_idx).limit(1)[0]
-    print(qa)
-
-    return qa['prompt_template'], qa['question'], qa['response'], "\n\n".join(qa['source_documents']), \
-        f"当前问答：{qa_idx + 1} \n 总数：{qa_total}", f"切换医院{choice_hsp}成功"
+    global qa_idx
+    return load_qa(choice_hsp, qa_idx + 1)
 
 
 def modify_qa(choice_hsp=None, question=None, prompt=None, answer=None, *args, **kwargs):
@@ -123,11 +132,22 @@ def modify_qa(choice_hsp=None, question=None, prompt=None, answer=None, *args, *
 
 def save_new_qa(choice_hsp=None, question=None, prompt=None, answer=None, *args, **kwargs):
     print(f"医院：{choice_hsp}\n提示：{prompt}\n问题：{question}\n回答：{answer}")
-    global qa
-    result = table.update_one({"_id": qa['_id']}, {"$set": {'response': answer}})
-    if result.modified_count > 0:
-        qa['response'] = answer
-    return "修改成功"
+    global qa, qa_total
+    qa_new = copy.deepcopy(qa)
+    if "_id" in qa_new:
+        del qa_new['_id']
+    result = table.insert_one(qa_new)
+    if result.inserted_id:
+        qa_total += 1
+    return refresh_qa(choice_hsp)
+
+
+def delete_qa(choice_hsp=None, question=None, prompt=None, answer=None, *args, **kwargs):
+    print(f"医院：{choice_hsp}\n提示：{prompt}\n问题：{question}\n回答：{answer}")
+    global qa, qa_total
+    table.delete_one({"_id": qa['_id']})
+    qa_total -= 1
+    return refresh_qa(choice_hsp)
 
 
 if __name__ == '__main__':
@@ -146,11 +166,13 @@ if __name__ == '__main__':
                 question_textbox = gr.Textbox(label="问题", value=qa['question'], placeholder='请输入问题', lines=2)
                 answer_textbox = gr.Textbox(label="回答", value=qa['response'], placeholder='AI回答', lines=2)
                 with gr.Row():
-                    guide = gr.Markdown(f"当前问答：{qa_idx + 1} \n 总数：{qa_total}")
+                    guide = gr.Markdown(f"总数：{qa_total}")
+                    qa_idx_tbox = gr.Number(value=qa_idx + 1, label='当前问答')
                     prev_btn = gr.Button(" < 前一个")
                     next_btn = gr.Button("下一个 > ")
 
                 with gr.Row():
+                    refresh_btn = gr.Button("刷新问答")
                     qa_btn = gr.Button("AI问答")
                     modify_qa_btn = gr.Button("更新原问答", variant="primary")
                     save_new_qa_btn = gr.Button(" + 保存新问答 ")
@@ -173,16 +195,18 @@ if __name__ == '__main__':
         inputs = [
             choice_hsp_dropdown, question_textbox, prompt_label, answer_textbox, hsp_info_box, pkg_info_box
         ]
-        outputs = [prompt_label, question_textbox, answer_textbox, source_label, guide, output_textbot]
+        outputs = [prompt_label, question_textbox, answer_textbox, source_label, guide, qa_idx_tbox, output_textbot]
 
         choice_hsp_dropdown.change(fn=hsp_change, inputs=inputs, outputs=outputs + [hsp_info_box, pkg_info_box])
 
         qa_btn.click(fn=submit_qa, inputs=inputs, outputs=[answer_textbox, source_label, output_textbot])
+        refresh_btn.click(fn=refresh_qa, inputs=inputs, outputs=outputs)
+        qa_idx_tbox.change(fn=load_qa_jump, inputs=[qa_idx_tbox] + inputs, outputs=outputs)
         prev_btn.click(fn=load_qa_prev, inputs=inputs, outputs=outputs)
         next_btn.click(fn=load_qa_next, inputs=inputs, outputs=outputs)
 
         modify_qa_btn.click(fn=modify_qa, inputs=inputs, outputs=output_textbot)
-        save_new_qa_btn.click(fn=save_new_qa, inputs=inputs, outputs=output_textbot)
+        save_new_qa_btn.click(fn=save_new_qa, inputs=inputs, outputs=outputs)
 
         save_hsp_btn.click(fn=save_hsp_file, inputs=[choice_hsp_dropdown, hsp_info_box], outputs=output_textbot)
         save_pkg_btn.click(fn=save_pkg_file, inputs=[choice_hsp_dropdown, pkg_info_box], outputs=output_textbot)

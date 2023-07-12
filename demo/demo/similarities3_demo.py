@@ -1,9 +1,11 @@
+import os
+
 import pymongo
 from similarities import Similarity
 
 vs_path = '/home/dev/team/langchain-ChatGLM/demo/data/vector_store'
 
-client = pymongo.MongoClient("mongodb://root:password123@192.168.0.9:27017")
+client = pymongo.MongoClient(f"mongodb://{os.environ.get('usr+pwd')}@192.168.0.9:27017")
 db = client.get_database("hplus_platform")
 
 # 简单排除以下测试医院

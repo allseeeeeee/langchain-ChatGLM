@@ -2,10 +2,11 @@
 # @Time    : 2023-02-15
 # @Author  : 罗景田
 # 此py主要说明：
+import os
 import time
 import pymongo as pymongo
 
-client = pymongo.MongoClient("mongodb://root:password123@192.168.0.9:27017")
+client = pymongo.MongoClient(f"mongodb://{os.environ.get('usr+pwd')}@192.168.0.9:27017")
 db = client.get_database("hplus_platform")
 
 def export_hospital_name():

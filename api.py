@@ -142,8 +142,15 @@ async def ref_kb(knowledge_base_id: str = Body(..., description="Knowledge Base 
     vector_store.score_threshold = local_doc_qa.score_threshold
     related_docs_with_score = vector_store.similarity_search_with_score(query, k=local_doc_qa.top_k)
     torch_gc()
+    print(related_docs_with_score)
+    docs_info = [
+        f"""出处 [{inum + 1}] {os.path.split(doc.metadata['source'])[-1]}：\n\n{doc.page_content}\n\n"""
+        f"""相关度：{doc.metadata['score']}\n\n"""
+        for inum, doc in enumerate(related_docs_with_score)
+    ]
+    context = "\n".join(docs_info)
 
-    return ListDocsResponse(data=related_docs_with_score)
+    return BaseResponse(code=200, msg=context)
 
 
 async def upload_files(
