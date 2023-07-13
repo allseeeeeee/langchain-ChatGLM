@@ -372,6 +372,9 @@ async def bing_search_chat(
 
 async def chat(
         question: str = Body(..., description="Question", example="工伤保险是什么？"),
+        prompt_template: str = Body(default=PROMPT_TEMPLATE, description="PromptTemplate",
+                                    example="已知信息：{context}\n问题是：{question}"),
+        streaming: bool = Body(..., description="streaming", example="True"),
         history: List[List[str]] = Body(
             [],
             description="History of previous questions and answers",
@@ -383,8 +386,9 @@ async def chat(
             ],
         ),
 ):
-    for answer_result in local_doc_qa.llm.generatorAnswer(prompt=question, history=history,
-                                                          streaming=True):
+    query = prompt_template.replace("{question}", question) if len(prompt_template) > 0 else question
+    for answer_result in local_doc_qa.llm.generatorAnswer(prompt=query, history=history,
+                                                          streaming=True if streaming else False):
         resp = answer_result.llm_output["answer"]
         history = answer_result.history
         pass
