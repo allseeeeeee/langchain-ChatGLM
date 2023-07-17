@@ -80,10 +80,13 @@ def hsp_change(choice_hsp, *args, **kwargs):
     qa = table.find({"hsp_code": choice_hsp}).skip(qa_idx).limit(1)[0]
     print(qa)
 
-    return qa['prompt_template'], qa['question'], qa['response'], "\n\n".join(qa['source_documents']), \
-        f"总数：{qa_total}", qa_idx + 1, f"切换医院{choice_hsp}成功", \
-        read_file(get_file_path(choice_hsp, '医院信息.txt')), \
-        read_file(get_file_path(choice_hsp, '套餐信息.txt'))
+    return qa['prompt_template'] if 'prompt_template' in qa else '', \
+            qa['question'] if 'question' in qa else '', \
+            qa['response'] if 'response' in qa else '', \
+            "\n\n".join(qa['source_documents']) if 'source_documents' in qa else '', \
+            f"总数：{qa_total}", qa_idx + 1, f"切换医院{choice_hsp}成功", \
+            read_file(get_file_path(choice_hsp, '医院信息.txt')), \
+            read_file(get_file_path(choice_hsp, '套餐信息.txt'))
 
 
 def load_qa(choice_hsp, qa_skip):
@@ -95,8 +98,11 @@ def load_qa(choice_hsp, qa_skip):
     qa = table.find({"hsp_code": choice_hsp}).skip(qa_idx).limit(1)[0]
     print(qa)
 
-    return qa['prompt_template'], qa['question'], qa['response'], "\n\n".join(qa['source_documents']), \
-        f"总数：{qa_total}", qa_idx + 1, f"加载成功"
+    return qa['prompt_template'] if 'prompt_template' in qa else '', \
+            qa['question'] if 'question' in qa else '', \
+            qa['response'] if 'response' in qa else '', \
+            "\n\n".join(qa['source_documents']) if 'source_documents' in qa else '', \
+            f"总数：{qa_total}", qa_idx + 1, f"加载成功"
 
 
 def refresh_qa(choice_hsp, *args, **kwargs):

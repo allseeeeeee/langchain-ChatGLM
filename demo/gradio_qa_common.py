@@ -42,7 +42,6 @@ def submit_qa(choice_hsp=None, question=None, prompt=None, *args, **kwargs):
 def load_qa(choice_hsp, qa_skip):
     global qa_idx, qa_total, qa, qa_filters
     qa_total = table.count_documents(qa_filters)
-    print('qa_total', qa_total)
     qa_skip = 0 if qa_skip < 0 else qa_skip
     qa_skip = max(qa_total - 1, 0) if qa_skip >= qa_total - 1 else qa_skip
     print(qa_filters, qa_skip, qa_total)
@@ -56,10 +55,10 @@ def load_qa(choice_hsp, qa_skip):
             qa['cate1'] if 'cate1' in qa else '', \
             qa['cate2'] if 'cate2' in qa else '', \
             "\n\n".join(qa['source_documents']) if 'source_documents' in qa else '', \
-            f"总数：{qa_total}", qa_idx, '', f"加载成功"
+            f"总数：{qa_total}", qa_idx+1, '', f"加载成功"
     except Exception as e:
         print('ERROR: >>>>> ', e)
-        return "", "", "", "", "", "", f"总数：{qa_total}", qa_idx, '', f"无数据"
+        return "", "", "", "", "", "", f"总数：{qa_total}", qa_idx+1, '', f"无数据"
 
 
 def refresh_qa(choice_hsp, *args, **kwargs):
@@ -80,7 +79,7 @@ def filter_change(filter_info, *args, **kwargs):
 
 def load_qa_jump(jump_to, choice_hsp, *args, **kwargs):
     print('jump_to >> ', jump_to)
-    return load_qa(choice_hsp, int(jump_to))
+    return load_qa(choice_hsp, int(jump_to)-1)
 
 
 def load_qa_prev(choice_hsp, *args, **kwargs):
