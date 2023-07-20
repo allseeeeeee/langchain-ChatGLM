@@ -5,6 +5,7 @@ import os
 import pymongo
 import gradio as gr
 import requests
+import subprocess
 
 auth = os.environ.get('usr+pwd')
 if auth is None or len(auth) == 0:
@@ -20,7 +21,21 @@ qa = None
 qa_filters = {}
 
 
+def copy_to_clipboard(question, prompt, source_docs):
+    try:
+        info = prompt.replace("{question}", question) if question and len(question) > 0 else prompt
+        info = info.replace("{context}", source_docs) if source_docs and len(source_docs) > 0 else info
+        print(info)
+        p = subprocess.Popen(['xclip', '-selection', 'clipboard'], stdin=subprocess.PIPE)
+        p.communicate(input=info.encode())
+        return "问题复制成功"
+    except Exception as e:
+        print('复制出错啦', e)
+        return "复制出错啦"
+
+
 def submit_qa(choice_hsp=None, question=None, prompt=None, *args, **kwargs):
+    source_docs = kwargs.get('source_docs')
     if choice_hsp and 'common' != choice_hsp:
         json_data = {
             "knowledge_base_id": choice_hsp,
@@ -29,6 +44,7 @@ def submit_qa(choice_hsp=None, question=None, prompt=None, *args, **kwargs):
         }
         resp = requests.post("http://localhost:7861/local_doc_qa/local_doc_chat", json=json_data).json()
     else:
+        prompt = prompt.replace("{context}", source_docs) if source_docs and len(source_docs) > 0 else prompt
         json_data = {
             "streaming": False,
             "question": question,
@@ -102,8 +118,8 @@ def modify_qa(choice_hsp=None, question=None, prompt=None, answer=None, cate1=No
                                                                      'source_documents': source}},
                                        return_document=pymongo.ReturnDocument.AFTER
                                        )
-    if result.matched_count > 0:
-        qa = result.raw_result
+    print(result)
+    qa = result
     return f"修改成功"
 
 
@@ -147,11 +163,10 @@ if __name__ == '__main__':
             }
 
         gr.Markdown("**医院知识问答数据集编辑💰**: 医院通用知识. ")
+        output_textbot = gr.Markdown("")
         with gr.Row():
             with gr.Column(scale=5):
                 filter_box = gr.Textbox(label="筛选", value="{}", lines=1)
-                question_textbox = gr.Textbox(label="问题", value=qa['question'], placeholder='请输入问题', lines=1)
-                answer_textbox = gr.Textbox(label="回答", value=qa['response'], placeholder='回答', lines=1)
                 with gr.Row():
                     guide = gr.Markdown(f"总数：{qa_total}")
                     qa_idx_tbox = gr.Number(value=qa_idx + 1, label='当前问答')
@@ -165,12 +180,15 @@ if __name__ == '__main__':
                     modify_qa_btn = gr.Button("更新原问答", variant="primary")
                     save_new_qa_btn = gr.Button(" + 保存新问答 ", variant='secondary')
                     delete_qa_btn = gr.Button(" - 删除问答 ", variant='stop')
-                output_textbot = gr.Markdown("")
+                question_textbox = gr.Textbox(label="问题", value=qa['question'], placeholder='请输入问题', lines=1)
+                answer_textbox = gr.Textbox(label="回答", value=qa['response'], placeholder='回答', lines=1)
             with gr.Column(scale=3):
-                prompt_label = gr.Textbox(label="提示模板", value=qa['prompt_template'], lines=8)
+                prompt_label = gr.Textbox(label="提示模板", value=qa['prompt_template'], lines=2)
+                source_label = gr.Textbox(label="参考信息", value=qa['source_documents'], lines=8)
+                with gr.Row():
+                    copy_btn = gr.Button("复制问题")
+                    qa_btn = gr.Button("AI问答")
                 choice_hsp_dropdown = gr.Textbox(label="当前知识库", value="common")
-                source_label = gr.Textbox(label="参考信息", value=qa['source_documents'])
-                qa_btn = gr.Button("AI问答")
                 ai_answer_textbox = gr.Textbox(label="AI问答", lines=1)
 
         inputs = [choice_hsp_dropdown, question_textbox, prompt_label, answer_textbox, cate1_tbox, cate2_tbox,
@@ -179,6 +197,7 @@ if __name__ == '__main__':
                    qa_idx_tbox, ai_answer_textbox, output_textbot]
 
         qa_btn.click(fn=submit_qa, inputs=inputs, outputs=[ai_answer_textbox, source_label, output_textbot])
+        copy_btn.click(fn=copy_to_clipboard, inputs=[question_textbox, prompt_label, source_label], outputs=output_textbot)
         filter_box.change(fn=filter_change, inputs=[filter_box] + inputs, outputs=output_textbot)
         refresh_btn.click(fn=refresh_qa, inputs=inputs, outputs=outputs)
         qa_idx_tbox.change(fn=load_qa_jump, inputs=[qa_idx_tbox] + inputs, outputs=outputs)
@@ -189,5 +208,5 @@ if __name__ == '__main__':
         save_new_qa_btn.click(fn=save_new_qa, inputs=inputs, outputs=outputs)
         delete_qa_btn.click(fn=delete_qa, inputs=inputs, outputs=outputs)
 
-    app.launch()
+    app.launch(server_name="0.0.0.0")
     pass
