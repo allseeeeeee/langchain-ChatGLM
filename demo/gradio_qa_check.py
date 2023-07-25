@@ -162,29 +162,28 @@ if __name__ == '__main__':
         qa = table.find_one({"hsp_code": hsp})
         qa_total = table.count_documents({"hsp_code": hsp})
         print(qa)
-
         gr.Markdown("**医院知识问答数据集编辑💰**: 选择医院，并根据问题进行答复的人工核对，点击提交进行保存. ")
-
+        output_textbot = gr.Markdown()
         with gr.Row():
             with gr.Column():
-                choice_hsp_dropdown = gr.Dropdown(label="当前知识库（医院）", choices=all_hsp, value=hsp)
                 prompt_label = gr.Textbox(label="提示模板", value=qa['prompt_template'])
-                question_textbox = gr.Textbox(label="问题", value=qa['question'], placeholder='请输入问题', lines=2)
-                answer_textbox = gr.Textbox(label="回答", value=qa['response'], placeholder='AI回答', lines=2)
                 with gr.Row():
                     guide = gr.Markdown(f"总数：{qa_total}")
-                    qa_idx_tbox = gr.Number(value=qa_idx + 1, label='当前问答')
+                    refresh_btn = gr.Button("刷新问答")
                     prev_btn = gr.Button(" < 前一个")
                     next_btn = gr.Button("下一个 > ")
-
                 with gr.Row():
-                    refresh_btn = gr.Button("刷新问答")
                     qa_btn = gr.Button("AI问答")
                     modify_qa_btn = gr.Button("更新原问答", variant="primary")
                     save_new_qa_btn = gr.Button(" + 保存新问答 ")
-                    delete_qa_btn = gr.Button(" - 删除问答 ")
-                output_textbot = gr.TextArea(label="结果")
+                    delete_qa_btn = gr.Button(" - 删除问答 ", variant="stop")
+                    qa_idx_tbox = gr.Number(value=qa_idx + 1, label='当前问答')
+
+                question_textbox = gr.Textbox(label="问题", value=qa['question'], placeholder='请输入问题', lines=2)
+                answer_textbox = gr.Textbox(label="回答", value=qa['response'], placeholder='AI回答', lines=2)
+
             with gr.Column():
+                choice_hsp_dropdown = gr.Dropdown(label="当前知识库（医院）", choices=all_hsp, value=hsp)
                 with gr.Tab("医院信息", elem_id="hsp") as hsp_tab:
                     hsp_info_box = gr.TextArea(value=read_file(get_file_path(hsp, '医院信息.txt')),
                                                show_label=False, max_lines=10)

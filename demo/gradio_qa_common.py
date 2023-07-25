@@ -34,8 +34,10 @@ def copy_to_clipboard(question, prompt, source_docs):
         return "复制出错啦"
 
 
-def submit_qa(choice_hsp=None, question=None, prompt=None, *args, **kwargs):
-    source_docs = kwargs.get('source_docs')
+def submit_qa(choice_hsp=None, question=None, prompt=None, resp=None, cate1=None, cate2=None, cate3=None, cate4=None,
+              source_docs=None, *args, **kwargs):
+    # source_docs = kwargs.get('source_label')
+    # print(args[5])
     if choice_hsp and 'common' != choice_hsp:
         json_data = {
             "knowledge_base_id": choice_hsp,
@@ -43,6 +45,8 @@ def submit_qa(choice_hsp=None, question=None, prompt=None, *args, **kwargs):
             "prompt_template": prompt
         }
         resp = requests.post("http://localhost:7861/local_doc_qa/local_doc_chat", json=json_data).json()
+        print(choice_hsp, resp)
+        return resp['response'], resp['source_documents'], "提交问答成功"
     else:
         prompt = prompt.replace("{context}", source_docs) if source_docs and len(source_docs) > 0 else prompt
         json_data = {
@@ -52,7 +56,7 @@ def submit_qa(choice_hsp=None, question=None, prompt=None, *args, **kwargs):
         }
         resp = requests.post("http://localhost:7861/chat", json=json_data).json()
     print(choice_hsp, resp)
-    return resp['response'], "\n\n".join(resp['source_documents']), "提交问答成功"
+    return resp['response'], source_docs, "提交问答成功"
 
 
 def load_qa(choice_hsp, qa_skip):
@@ -70,11 +74,15 @@ def load_qa(choice_hsp, qa_skip):
             qa['response'] if 'response' in qa else '', \
             qa['cate1'] if 'cate1' in qa else '', \
             qa['cate2'] if 'cate2' in qa else '', \
-            "\n\n".join(qa['source_documents']) if 'source_documents' in qa else '', \
-            f"总数：{qa_total}", qa_idx+1, '', f"加载成功"
+            qa['cate3'] if 'cate3' in qa else '', \
+            qa['cate4'] if 'cate4' in qa else '', \
+            qa['source_documents'] if 'source_documents' in qa else '', \
+            f"总数：{qa_total}", qa_idx+1, '', f"加载成功", \
+            qa['before_response_1'] if 'before_response_1' in qa else '', \
+            qa['after_response_1'] if 'after_response_1' in qa else ''
     except Exception as e:
         print('ERROR: >>>>> ', e)
-        return "", "", "", "", "", "", f"总数：{qa_total}", qa_idx+1, '', f"无数据"
+        return "", "", "", "", "", "", f"总数：{qa_total}", qa_idx+1, '', f"无数据", ''
 
 
 def refresh_qa(choice_hsp, *args, **kwargs):
@@ -108,12 +116,13 @@ def load_qa_next(choice_hsp, *args, **kwargs):
     return load_qa(choice_hsp, qa_idx + 1)
 
 
-def modify_qa(choice_hsp=None, question=None, prompt=None, answer=None, cate1=None, cate2=None,
+def modify_qa(choice_hsp=None, question=None, prompt=None, answer=None, cate1=None, cate2=None, cate3=None, cate4=None,
               source=None, *args, **kwargs):
-    print(f"医院：{choice_hsp}\n提示：{prompt}\n问题：{question}\n回答：{answer}")
+    print(f"医院：{choice_hsp}")
     global qa
     result = table.find_one_and_update({"_id": qa['_id']}, {"$set": {'question': question, 'response': answer,
                                                                      'cate1': cate1, 'cate2': cate2,
+                                                                     'cate3': cate3, 'cate4': cate4,
                                                                      'prompt_template': prompt,
                                                                      'source_documents': source}},
                                        return_document=pymongo.ReturnDocument.AFTER
@@ -123,7 +132,7 @@ def modify_qa(choice_hsp=None, question=None, prompt=None, answer=None, cate1=No
     return f"修改成功"
 
 
-def save_new_qa(choice_hsp=None, question=None, prompt=None, answer=None, cate1=None, cate2=None,
+def save_new_qa(choice_hsp=None, question=None, prompt=None, answer=None, cate1=None, cate2=None, cate3=None, cate4=None,
                 source=None, *args, **kwargs):
     print(f"医院：{choice_hsp}\n提示：{prompt}\n问题：{question}\n回答：{answer}")
     global qa, qa_idx, qa_total
@@ -135,6 +144,8 @@ def save_new_qa(choice_hsp=None, question=None, prompt=None, answer=None, cate1=
     qa_new['prompt_template'] = prompt
     qa_new['cate1'] = cate1
     qa_new['cate2'] = cate2
+    qa_new['cate3'] = cate3
+    qa_new['cate4'] = cate4
     qa_new['source_documents'] = source
 
     result = table.insert_one(qa_new)
@@ -159,7 +170,8 @@ if __name__ == '__main__':
 
         if qa is None:
             qa = {
-                "question": "", "response": "", "prompt_template": "", "source_documents": "", "cate1": "", "cate2": ""
+                "question": "", "response": "", "prompt_template": "", "source_documents": "",
+                "cate1": "", "cate2": "", "cate3": "", "cate4": "", "before_response_1": "", "after_response_1": ""
             }
 
         gr.Markdown("**医院知识问答数据集编辑💰**: 医院通用知识. ")
@@ -173,28 +185,34 @@ if __name__ == '__main__':
                     prev_btn = gr.Button(" < 前一个")
                     next_btn = gr.Button("下一个 > ")
                 with gr.Row():
-                    cate1_tbox = gr.Textbox(value='', label='cate1')
-                    cate2_tbox = gr.Textbox(value='', label='cate2')
+                    cate1_tbox = gr.Textbox(value=qa['cate1'] if 'cate1' in qa else '', label='cate1')
+                    cate2_tbox = gr.Textbox(value=qa['cate2'] if 'cate2' in qa else '', label='cate2')
+                    cate3_tbox = gr.Textbox(value=qa['cate3'] if 'cate3' in qa else '', label='cate3')
+                    cate4_tbox = gr.Textbox(value=qa['cate4'] if 'cate4' in qa else '', label='cate4')
                 with gr.Row():
                     refresh_btn = gr.Button("刷新问答")
                     modify_qa_btn = gr.Button("更新原问答", variant="primary")
                     save_new_qa_btn = gr.Button(" + 保存新问答 ", variant='secondary')
                     delete_qa_btn = gr.Button(" - 删除问答 ", variant='stop')
-                question_textbox = gr.Textbox(label="问题", value=qa['question'], placeholder='请输入问题', lines=1)
-                answer_textbox = gr.Textbox(label="回答", value=qa['response'], placeholder='回答', lines=1)
+                question_textbox = gr.TextArea(label="问题", value=qa['question'], placeholder='请输入问题', lines=1)
+                answer_textbox = gr.TextArea(label="回答", value=qa['response'], placeholder='回答', lines=1)
+                answer1_textbox = gr.TextArea(label="微调前回答",
+                                        value=qa['before_response_1'] if 'before_response_1' in qa else '', lines=1)
+                answer2_textbox = gr.TextArea(label="微调后回答",
+                                        value=qa['after_response_1'] if 'after_response_1' in qa else '', lines=1)
             with gr.Column(scale=3):
-                prompt_label = gr.Textbox(label="提示模板", value=qa['prompt_template'], lines=2)
-                source_label = gr.Textbox(label="参考信息", value=qa['source_documents'], lines=8)
+                prompt_label = gr.TextArea(label="提示模板", value=qa['prompt_template'], lines=2)
+                source_label = gr.TextArea(label="参考信息", value=qa['source_documents'], lines=4)
                 with gr.Row():
                     copy_btn = gr.Button("复制问题")
                     qa_btn = gr.Button("AI问答")
                 choice_hsp_dropdown = gr.Textbox(label="当前知识库", value="common")
                 ai_answer_textbox = gr.Textbox(label="AI问答", lines=1)
 
-        inputs = [choice_hsp_dropdown, question_textbox, prompt_label, answer_textbox, cate1_tbox, cate2_tbox,
-                  source_label]
-        outputs = [prompt_label, question_textbox, answer_textbox, cate1_tbox, cate2_tbox, source_label, guide,
-                   qa_idx_tbox, ai_answer_textbox, output_textbot]
+        inputs = [choice_hsp_dropdown, question_textbox, prompt_label, answer_textbox,
+                  cate1_tbox, cate2_tbox, cate3_tbox, cate4_tbox, source_label]
+        outputs = [prompt_label, question_textbox, answer_textbox, cate1_tbox, cate2_tbox, cate3_tbox, cate4_tbox,
+                   source_label, guide, qa_idx_tbox, ai_answer_textbox, output_textbot, answer1_textbox, answer2_textbox]
 
         qa_btn.click(fn=submit_qa, inputs=inputs, outputs=[ai_answer_textbox, source_label, output_textbot])
         copy_btn.click(fn=copy_to_clipboard, inputs=[question_textbox, prompt_label, source_label], outputs=output_textbot)

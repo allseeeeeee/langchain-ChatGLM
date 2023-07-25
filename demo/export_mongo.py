@@ -3,7 +3,7 @@
 # @Author  : 罗景田
 # 此py主要说明：
 import os
-import time
+import re
 import pymongo as pymongo
 
 client = pymongo.MongoClient(f"mongodb://{os.environ.get('usr+pwd')}@192.168.0.9:27017")
@@ -65,7 +65,7 @@ def doc_hsp(hsp):
 医院级别：{hsp['primary_hsp_level']}
 医院等次：{hsp['secondary_hsp_level']}
 医院类型：{hsp['hospital_type']}{hsp['primary_hsp_level']}{hsp['secondary_hsp_level']}
-医院类型：{hsp['hospital_type']}{str(hsp['primary_hsp_level']+("" if hsp['secondary_hsp_level'] is '未定等' else hsp['secondary_hsp_level'])).replace("级", "").replace("等", "")}
+医院类型：{hsp['hospital_type']}{str(hsp['primary_hsp_level']+("" if hsp['secondary_hsp_level'] == '未定等' else hsp['secondary_hsp_level'])).replace("级", "").replace("等", "")}
 医院地址：{hsp['province']}{hsp['city']}{hsp['district']}{hsp['address']}
 体检工作日：{hsp['work_day']}
 {item(hsp, 'desc_of_work_time', '工作时间')} {item(hsp, 'reception_deadline_per_day', '最晚到院时间')}
@@ -87,11 +87,47 @@ def export_hsp_info(hsp_code: str = None, path: str = 'data'):
     pass
 
 
+def split_qa_prompt():
+    qa_table = db.get_collection("00_chat_qa_common")
+    datasets = qa_table.find({"source_documents": {"$ne": ""}})
+    # pattern = r"(已知信息：\n)([\s\S]*?)\n(问题是：{question}|请使用中文回答[\s\S]*?问题是：{question})"
+    for data in datasets:
+        # prompts = data['prompt_template']
+        # if "请使用中文回答。问题是：{question}" == prompts\
+        #         or "请用中文进行简洁和专业的回答用户的问题。\n问题是：{question}" == prompts:
+        #     continue
+        #
+        # known_info = re.findall(pattern, prompts)
+        # if len(known_info) > 0:
+        #     context = re.sub(pattern, r"\1{context}\n\n\3", prompts)
+        #     update = {
+        #         "source_documents": known_info[0][1],
+        #         "prompt_template": context
+        #     }
+        #     print(context)
+        #     print(update)
+        #     qa_table.update_one({"_id": data['_id']}, update={"$set": update})
+        # else:
+        #     print(data)
+        #     print(prompts)
+        print(data['source_documents'])
+        print("------------------------------")
+    pass
+
+
+
 if __name__ == '__main__':
     # sys_tag = db.get_collection("hsp_hospital")
     # print(sys_tag.find_one({"organization_code": "5C6CC2CB199E0500010412CB"}))
     # export_hospital_name()
     # export_hsp_info("5C6CC2CB199E0500010412CB")
-    export_hsp_set_meals("5C6CC2CB199E0500010412CB")
+    # export_hsp_set_meals("5C6CC2CB199E0500010412CB")
+    # split_qa_prompt()
 
+    # pattern = r"(已知信息：\n)([\s\S]*?)\n(问题是：{question}|根据上述已知信息[\s\S]*?问题是：{question})"
+    # prompt = "已知信息：\n医院名称：浙江省人民医院朝晖院区 \n不支持报告邮寄\n根据上述已知信息，简洁专业。用户问题是：{question}"
+    # known_info = re.findall(pattern, prompt)
+    # print(known_info[0][1])
+    # context = re.sub(pattern, r"\1{context}\n\n\3", prompt)
+    # print(context)
     pass
