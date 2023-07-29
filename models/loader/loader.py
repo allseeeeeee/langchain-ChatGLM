@@ -425,7 +425,7 @@ class LoaderCheckPoint:
                 self.model_config.pre_seq_len = prefix_encoder_config['pre_seq_len']
                 self.model_config.prefix_projection = prefix_encoder_config['prefix_projection']
             except Exception as e:
-                print("加载PrefixEncoder config.json失败")
+                print("加载PrefixEncoder config.json失败", e)
 
         self.model, self.tokenizer = self._load_model(self.model_name)
 
@@ -434,6 +434,7 @@ class LoaderCheckPoint:
 
         if self.use_ptuning_v2:
             try:
+                print(f'Loading the p-tuning checkpoint {self.ptuning_dir}/pytorch_model.bin ...')
                 prefix_state_dict = torch.load(Path(f'{self.ptuning_dir}/pytorch_model.bin'))
                 new_prefix_state_dict = {}
                 for k, v in prefix_state_dict.items():
@@ -442,6 +443,6 @@ class LoaderCheckPoint:
                 self.model.transformer.prefix_encoder.load_state_dict(new_prefix_state_dict)
                 self.model.transformer.prefix_encoder.float()
             except Exception as e:
-                print("加载PrefixEncoder模型参数失败")
+                print("加载PrefixEncoder模型参数失败", e)
 
         self.model = self.model.eval()

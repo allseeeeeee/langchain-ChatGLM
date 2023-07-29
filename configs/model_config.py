@@ -67,7 +67,8 @@ llm_model_dict = {
     "chatglm2-6b-int4": {
         "name": "chatglm2-6b-int4",
         "pretrained_model_name": "THUDM/chatglm2-6b-int4",
-        "local_model_path": "/home/dev/team/chatglm2-6b-int4",
+        "local_model_path": "/home/dev/team/QAHO/checkpoint-3000",
+        # "local_model_path": "/home/dev/team/chatglm2-6b-int4",
         "provides": "ChatGLM"
     },
     "chatyuan": {

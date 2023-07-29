@@ -4,7 +4,10 @@
 # 此py主要说明：
 import os
 import re
+import random
+
 import pymongo as pymongo
+import jsonlines
 
 client = pymongo.MongoClient(f"mongodb://{os.environ.get('usr+pwd')}@192.168.0.9:27017")
 db = client.get_database("hplus_platform")
@@ -61,14 +64,10 @@ def export_hsp_set_meals(hsp_code: str = None, path: str = 'data'):
 def doc_hsp(hsp):
     return f"""
 医院名称：{hsp['name']}
-医院类型：{hsp['hospital_type'] + '医院'}
-医院级别：{hsp['primary_hsp_level']}
-医院等次：{hsp['secondary_hsp_level']}
 医院类型：{hsp['hospital_type']}{hsp['primary_hsp_level']}{hsp['secondary_hsp_level']}
-医院类型：{hsp['hospital_type']}{str(hsp['primary_hsp_level']+("" if hsp['secondary_hsp_level'] == '未定等' else hsp['secondary_hsp_level'])).replace("级", "").replace("等", "")}
 医院地址：{hsp['province']}{hsp['city']}{hsp['district']}{hsp['address']}
 体检工作日：{hsp['work_day']}
-{item(hsp, 'desc_of_work_time', '工作时间')} {item(hsp, 'reception_deadline_per_day', '最晚到院时间')}
+{item(hsp, 'desc_of_work_time', '体检工作时间')} {item(hsp, 'reception_deadline_per_day', '最晚到院时间')}
 {item(hsp, 'reserve_notice', '体检须知')}
 {item(hsp, 'examination_notice_html', '体检注意事项')}
 {item(hsp, 'report_obtain_desc', '报告领取')}
@@ -115,6 +114,92 @@ def split_qa_prompt():
     pass
 
 
+def export_train():
+    result_data = db.get_collection("00_chat_qa_common").find({})
+    data = list(result_data)
+    validation_size = int(0.1 * len(data))
+    validation_data = random.sample(data, validation_size)
+    for line_item in validation_data:
+        data.remove(line_item)
+
+    prompt = """问题是：{question}
+根据已知信息回答：
+{context}
+"""
+
+    with jsonlines.open("data/train_ho.json", 'w') as f:
+        for line in data:
+            question = line['question'] if 'question' in line else ''
+            source_documents = line['source_documents'] if 'source_documents' in line else ''
+            # prompt = line['prompt_template'] if 'prompt_template' in line else ''
+            response = line['response'] if 'response' in line else ''
+            line_item = {
+                'content': prompt.replace('{context}', source_documents).replace('{question}', question),
+                'summary': response
+            }
+            f.write(line_item)
+
+    with jsonlines.open("data/validation_ho.json", 'w') as f:
+        for line in validation_data:
+            question = line['question'] if 'question' in line else ''
+            source_documents = line['source_documents'] if 'source_documents' in line else ''
+            # prompt = line['prompt_template'] if 'prompt_template' in line else ''
+            response = line['response'] if 'response' in line else ''
+            line_item = {
+                'content': prompt.replace('{context}', source_documents).replace('{question}', question),
+                'summary': response
+            }
+            f.write(line_item)
+    pass
+
+
+def max_qa_len():
+    data = db.get_collection("00_chat_qa_common").find({})
+    max_q_len = 0
+    max_a_len = 0
+    summary_q = {}
+    summary_a = {}
+
+    prompt = """问题是：{question}
+    根据已知信息回答：
+    {context}
+    """
+
+    for line in data:
+        question = line['question'] if 'question' in line else ''
+        source_documents = line['source_documents'] if 'source_documents' in line else ''
+        # prompt = line['prompt_template'] if 'prompt_template' in line else ''
+        final_a = line['response'] if 'response' in line else ''
+        final_q = prompt.replace('{context}', source_documents).replace('{question}', question)
+
+        q_len = len(final_q)
+        a_len = len(final_a)
+
+        if str(q_len) in summary_q:
+            summary_q[str(q_len)] = summary_q[str(q_len)] + 1
+        else:
+            summary_q[str(q_len)] = 1
+
+        if str(a_len) in summary_a:
+            summary_a[str(a_len)] = summary_a[str(a_len)] + 1
+        else:
+            summary_a[str(a_len)] = 1
+
+        if q_len > max_q_len:
+            max_q_len = q_len
+        if a_len > max_a_len:
+            max_a_len = a_len
+
+    print("最大问题长度:", max_q_len)
+    print("最大回答长度:", max_a_len)
+    print("summary_q:", summary_q)
+    print("summary_a:", summary_a)
+
+    # 最大问题长度: 2744
+    # 最大回答长度: 1338
+
+    pass
+
 
 if __name__ == '__main__':
     # sys_tag = db.get_collection("hsp_hospital")
@@ -130,4 +215,6 @@ if __name__ == '__main__':
     # print(known_info[0][1])
     # context = re.sub(pattern, r"\1{context}\n\n\3", prompt)
     # print(context)
+    export_train()
+    # max_qa_len()
     pass

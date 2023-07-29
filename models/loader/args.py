@@ -47,6 +47,8 @@ parser.add_argument('--no-remote-model', action='store_true', help='remote in th
                                                                    'if your load local '
                                                                    'model to add the ` '
                                                                    '--no-remote-model`')
+parser.add_argument('--use-ptuning-v2', action='store_true', default=USE_PTUNING_V2, help='use-ptuning-v2 default is False.')
+parser.add_argument("--ptuning-dir", type=str, help="Path to directory with ptuning")
 
 parser.add_argument('--lora', type=str, help='Name of the LoRA to apply to the model by default.')
 parser.add_argument("--lora-dir", type=str, default=LORA_DIR, help="Path to directory with all the loras")

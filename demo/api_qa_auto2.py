@@ -25,7 +25,7 @@ if __name__ == '__main__':
         total = table.count_documents({})
         print(f"总问答数：{total}")
         index = 0
-        resp_prefix = "before_response_"
+        resp_prefix = "after_response_"
         while index < total:
             print('=====================================================')
             qa = table.find({}).skip(index).limit(1)[0]
@@ -54,11 +54,7 @@ if __name__ == '__main__':
             result = table.find_one_and_update({"_id": qa['_id']},
                                                {
                                                    "$set": {
-                                                       f"{resp_prefix}1": qa[f"{resp_prefix}1"],
-                                                       # f"{resp_prefix}2": qa[f"{resp_prefix}2"],
-                                                       # f"{resp_prefix}3": qa[f"{resp_prefix}3"],
-                                                       # f"{resp_prefix}4": qa[f"{resp_prefix}4"],
-                                                       # f"{resp_prefix}5": qa[f"{resp_prefix}5"],
+                                                       f"{resp_prefix}2": qa[f"{resp_prefix}1"],
                                                    }
                                                },
                                                return_document=pymongo.ReturnDocument.AFTER
