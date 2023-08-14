@@ -67,10 +67,14 @@ if __name__ == '__main__':
                "YY0000345918065", "61933992553DC843DCE256BC", "5D01B04538E4E30001B36A4D",
                "5C9DBFC9CC6A00000178C70B", "5DA6C2AD832802000159B247"
                ]
+    hsp_hospital = db.get_collection("hsp_hospital")
+
+    result_data = hsp_hospital.find_one({'organization_code': "YY0000309218060"})
+    print(result_data)
+    init_knowledge_base(local_doc_qa, result_data)
 
     for hsp in all_hsp:
-        result_data = db.get_collection("hsp_hospital").find_one({'organization_code': hsp})
-        # result_data = db.get_collection("hsp_hospital").find({'organization_code': "YY0000309218060"})
+        result_data = hsp_hospital.find_one({'organization_code': hsp})
         print(result_data)
         init_knowledge_base(local_doc_qa, result_data)
 
