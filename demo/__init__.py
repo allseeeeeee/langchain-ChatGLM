@@ -1,5 +1,6 @@
 import os
 import pymongo as pymongo
+import re
 
 auth = os.environ.get('usr+pwd')
 if auth is None or len(auth) == 0:

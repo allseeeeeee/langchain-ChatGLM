@@ -5,6 +5,7 @@
 import os
 import re
 import random
+from datetime import datetime
 
 import pymongo as pymongo
 import jsonlines
@@ -115,6 +116,7 @@ def split_qa_prompt():
 
 
 def export_train():
+    now = datetime.now().strftime('%y%m%d')
     result_data = db.get_collection("00_chat_qa_common").find({})
     data = list(result_data)
     validation_size = int(0.1 * len(data))
@@ -127,7 +129,7 @@ def export_train():
 {context}
 """
 
-    with jsonlines.open("data/train_ho.json", 'w') as f:
+    with jsonlines.open(f"data/train_ho{now}.json", 'w') as f:
         for line in data:
             question = line['question'] if 'question' in line else ''
             source_documents = line['source_documents'] if 'source_documents' in line else ''
@@ -139,7 +141,7 @@ def export_train():
             }
             f.write(line_item)
 
-    with jsonlines.open("data/validation_ho.json", 'w') as f:
+    with jsonlines.open(f"data/validation_ho{now}.json", 'w') as f:
         for line in validation_data:
             question = line['question'] if 'question' in line else ''
             source_documents = line['source_documents'] if 'source_documents' in line else ''
