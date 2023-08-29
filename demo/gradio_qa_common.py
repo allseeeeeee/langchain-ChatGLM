@@ -76,25 +76,25 @@ def load_qa(choice_hsp, qa_skip):
             qa['cate2'] if 'cate2' in qa else '', \
             qa['cate3'] if 'cate3' in qa else '', \
             qa['mark0'] if 'mark0' in qa else '', \
-            qa['mark1'] if 'mark1' in qa else '', \
-            qa['mark2'] if 'mark2' in qa else '', \
-            qa['mark3'] if 'mark3' in qa else '', \
             qa['mark4'] if 'mark4' in qa else '', \
-            qa['mark5'] if 'mark5' in qa else '', \
-            qa['mark6'] if 'mark6' in qa else '', \
+            qa['mark_6b0'] if 'mark_6b0' in qa else '', \
+            qa['mark_6b1'] if 'mark_6b1' in qa else '', \
+            qa['mark_6b11'] if 'mark_6b11' in qa else '', \
+            qa['mark_6b12'] if 'mark_6b12' in qa else '', \
+            qa['mark_6b13'] if 'mark_6b13' in qa else '', \
             qa['source_documents'] if 'source_documents' in qa else '', \
             f"总数：{qa_total}", qa_idx+1, '', f"加载成功", \
             qa['before_response_1'] if 'before_response_1' in qa else '', \
-            qa['after_response_1'] if 'after_response_1' in qa else '', \
-            qa['after_response_2'] if 'after_response_2' in qa else '', \
-            qa['after_response_3'] if 'after_response_3' in qa else '', \
-            qa['full_bit_resp1'] if 'full_bit_resp1' in qa else '', \
-            qa['full_bit_resp2'] if 'full_bit_resp2' in qa else '', \
-            qa['full_bit_resp3'] if 'full_bit_resp3' in qa else ''
+            qa['6b_resp0'] if '6b_resp0' in qa else '', \
+            qa['6b_resp1'] if '6b_resp1' in qa else '', \
+            qa['6b_resp_11'] if '6b_resp_11' in qa else '', \
+            qa['6b_resp_12'] if '6b_resp_12' in qa else '', \
+            qa['6b_resp_13'] if '6b_resp_13' in qa else '', \
+            qa['after_response_1'] if 'after_response_1' in qa else ''
     except Exception as e:
         print('ERROR: >>>>> ', e)
         return "prompt_template", "question", "response", \
-            "cate1", "cate2", "cate3", "mark0", "mark1", "mark2", "mark3", "mark4", "mark5", "mark6",\
+            "cate1", "cate2", "cate3", "mark0", "mark4", "mark-6b0", "mark-6b1", "mark-6b11", "mark-6b12", "mark-6b13",\
             "source_documents", f"总数：{qa_total}", qa_idx+1, '', f"无数据", \
             '', '', '', '', '', '', ''
 
@@ -138,8 +138,8 @@ def modify_qa(choice_hsp=None, question=None, prompt=None, answer=None, cate1=No
     result = table.find_one_and_update({"_id": qa['_id']},
                                        {"$set": {'question': question, 'response': answer,
                                                  'cate1': cate1, 'cate2': cate2, 'cate3': cate3, 'mark0': mark0,
-                                                 'mark1': mark1, 'mark2': mark2, 'mark3': mark3, 'mark4': mark4,
-                                                 'mark5': mark5, 'mark6': mark6,
+                                                 'mark4': mark1, 'mark_6b0': mark2, 'mark_6b1': mark3, 'mark_6b11': mark4,
+                                                 'mark_6b12': mark5, 'mark_6b13': mark6,
                                                  'prompt_template': prompt,
                                                  'source_documents': source}},
                                        return_document=pymongo.ReturnDocument.AFTER
@@ -164,12 +164,12 @@ def save_new_qa(choice_hsp=None, question=None, prompt=None, answer=None, cate1=
     qa_new['cate2'] = cate2
     qa_new['cate3'] = cate3
     qa_new['mark0'] = mark0
-    qa_new['mark1'] = mark1
-    qa_new['mark2'] = mark2
-    qa_new['mark3'] = mark3
-    qa_new['mark4'] = mark4
-    qa_new['mark5'] = mark5
-    qa_new['mark6'] = mark6
+    qa_new['mark4'] = mark1
+    qa_new['mark_6b0'] = mark2
+    qa_new['mark_6b1'] = mark3
+    qa_new['mark_6b11'] = mark4
+    qa_new['mark_6b12'] = mark5
+    qa_new['mark_6b13'] = mark6
     qa_new['source_documents'] = source
 
     result = table.insert_one(qa_new)
@@ -204,17 +204,17 @@ if __name__ == '__main__':
                     prev_btn = gr.Button(" < 前一个")
                     next_btn = gr.Button("下一个 > ")
                 with gr.Row():
-                    cate1_tbox = gr.Textbox(value=qa['cate1'] if 'cate1' in qa else '', label='cate1')
-                    mark0_tbox = gr.Textbox(value=qa['mark0'] if 'mark0' in qa else '', label='Mark0')
-                    mark1_tbox = gr.Textbox(value=qa['mark1'] if 'mark1' in qa else '', label='Mark1')
-                    mark2_tbox = gr.Textbox(value=qa['mark2'] if 'mark2' in qa else '', label='Mark2')
-                    mark3_tbox = gr.Textbox(value=qa['mark3'] if 'mark3' in qa else '', label='Mark3')
+                    cate1_tbox = gr.Textbox(value=qa['cate1'] if 'cate1' in qa else '', label='cate1')  # cate1
+                    mark0_tbox = gr.Textbox(value=qa['mark0'] if 'mark0' in qa else '', label='Mark0')  # mark0
+                    mark1_tbox = gr.Textbox(value=qa['mark1'] if 'mark4' in qa else '', label='Mark1')  # mark4
+                    mark2_tbox = gr.Textbox(value=qa['mark_6b0'] if 'mark_6b0' in qa else '', label='Mark 6B0')  # mark_6b0
+                    mark3_tbox = gr.Textbox(value=qa['mark_6b1'] if 'mark_6b1' in qa else '', label='Mark 6B1')  # mark_6b1
                 with gr.Row():
-                    cate2_tbox = gr.Textbox(value=qa['cate2'] if 'cate2' in qa else '', label='cate2')
-                    cate3_tbox = gr.Textbox(value=qa['cate3'] if 'cate3' in qa else '', label='cate3')
-                    mark4_tbox = gr.Textbox(value=qa['mark4'] if 'mark4' in qa else '', label='Mark Full bit 1')
-                    mark5_tbox = gr.Textbox(value=qa['mark5'] if 'mark5' in qa else '', label='Mark Full bit 2')
-                    mark6_tbox = gr.Textbox(value=qa['mark6'] if 'mark6' in qa else '', label='Mark Full bit 3')
+                    cate2_tbox = gr.Textbox(value=qa['cate2'] if 'cate2' in qa else '', label='cate2')  # cate2
+                    cate3_tbox = gr.Textbox(value=qa['cate3'] if 'cate3' in qa else '', label='cate3')  # cate3
+                    mark4_tbox = gr.Textbox(value=qa['mark_6b11'] if 'mark_6b11' in qa else '', label='Mark 6B11')  # mark_6b11
+                    mark5_tbox = gr.Textbox(value=qa['mark_6b12'] if 'mark_6b12' in qa else '', label='Mark 6B12')  # mark_6b12
+                    mark6_tbox = gr.Textbox(value=qa['mark_6b13'] if 'mark_6b13' in qa else '', label='Mark 6B13')  # mark_6b13
 
                 with gr.Row():
                     refresh_btn = gr.Button("刷新问答")
@@ -222,18 +222,18 @@ if __name__ == '__main__':
                     save_new_qa_btn = gr.Button(" + 保存新问答 ", variant='secondary')
                     delete_qa_btn = gr.Button(" - 删除问答 ", variant='stop')
                 question_textbox = gr.TextArea(label="问题", lines=1, value=qa['question'] if 'question' in qa else '')
-                full_bit_resp1_textbox = gr.TextArea(label="full-bit 微调后回答1", lines=1,
-                                              value=qa['full_bit_resp1'] if 'full_bit_resp1' in qa else '')
-                full_bit_resp2_textbox = gr.TextArea(label="full-bit 微调后回答2", lines=1,
-                                              value=qa['full_bit_resp2'] if 'full_bit_resp2' in qa else '')
-                full_bit_resp3_textbox = gr.TextArea(label="full-bit 微调后回答3", lines=1,
-                                              value=qa['full_bit_resp3'] if 'full_bit_resp3' in qa else '')
-                answer2_textbox = gr.TextArea(label="微调后回答1", lines=1,
-                                              value=qa['after_response_1'] if 'after_response_1' in qa else '')
-                answer3_textbox = gr.TextArea(label="微调后回答2", lines=1,
-                                              value=qa['after_response_2'] if 'after_response_2' in qa else '')
-                answer4_textbox = gr.TextArea(label="微调后回答3", lines=1,
-                                              value=qa['after_response_3'] if 'after_response_3' in qa else '')
+                resp1_textbox = gr.TextArea(label="微调前回答2-6B", lines=1,
+                                            value=qa['6b_resp0'] if '6b_resp0' in qa else '')
+                resp2_textbox = gr.TextArea(label="微调后回答2-6BFB", lines=1,
+                                            value=qa['6b_resp1'] if '6b_resp1' in qa else '')
+                resp3_textbox = gr.TextArea(label="微调后回答2-6B11", lines=1,
+                                            value=qa['6b_resp_11'] if '6b_resp_11' in qa else '')
+                resp4_textbox = gr.TextArea(label="微调后回答2-6B12", lines=1,
+                                            value=qa['6b_resp_12'] if '6b_resp_12' in qa else '')
+                resp5_textbox = gr.TextArea(label="微调后回答2-6B13", lines=1,
+                                            value=qa['6b_resp_13'] if '6b_resp_13' in qa else '')
+                resp6_textbox = gr.TextArea(label="微调后回答int4", lines=1,
+                                            value=qa['after_response_1'] if 'after_response_1' in qa else '')
 
             with gr.Column(scale=3):
                 prompt_label = gr.TextArea(label="提示模板", lines=2,
@@ -258,8 +258,8 @@ if __name__ == '__main__':
         outputs = [prompt_label, question_textbox, answer_textbox, cate1_tbox, cate2_tbox, cate3_tbox,
                    mark0_tbox, mark1_tbox, mark2_tbox, mark3_tbox, mark4_tbox, mark5_tbox, mark6_tbox,
                    source_label, guide, qa_idx_tbox, ai_answer_textbox, output_textbot, answer1_textbox,
-                   answer2_textbox, answer3_textbox, answer4_textbox,
-                   full_bit_resp1_textbox, full_bit_resp2_textbox, full_bit_resp3_textbox]
+                   resp4_textbox, resp5_textbox, resp6_textbox,
+                   resp1_textbox, resp2_textbox, resp3_textbox]
 
         qa_btn.click(fn=submit_qa, inputs=inputs, outputs=[ai_answer_textbox, source_label, output_textbot])
         copy_btn.click(fn=copy_to_clipboard, inputs=[question_textbox, prompt_label, source_label],
@@ -275,4 +275,4 @@ if __name__ == '__main__':
         delete_qa_btn.click(fn=delete_qa, inputs=inputs, outputs=outputs)
 
     app.launch(server_name="0.0.0.0")
-    pass
+

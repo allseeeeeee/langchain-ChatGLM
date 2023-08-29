@@ -15,7 +15,7 @@ db = client.get_database("hplus_platform")
 table = db.get_collection("00_chat_qa_common")
 
 path = 'data'
-file = f"{path}/QA-{time.strftime('%Y%m%d')}.txt"
+file = f"{path}/QA-{time.strftime('%Y%m%d')}2.txt"
 parent_dir = os.path.dirname(file)
 if not os.path.exists(parent_dir):
     os.makedirs(parent_dir)
@@ -25,7 +25,7 @@ if __name__ == '__main__':
         total = table.count_documents({})
         print(f"总问答数：{total}")
         index = 0
-        resp_prefix = "full_bit_resp"
+        resp_prefix = "6b_resp_1"
         while index < total:
             print('=====================================================')
             qa = table.find({}).skip(index).limit(1)[0]
