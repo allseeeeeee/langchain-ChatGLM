@@ -5,15 +5,9 @@ import os
 import pymongo
 import gradio as gr
 import requests
-import subprocess
 
-auth = os.environ.get('usr+pwd')
-if auth is None or len(auth) == 0:
-    print("Please setup env params: [usr+pwd].  e.g: \nusr+pws=username:password")
+from demo import *
 
-client = pymongo.MongoClient(f"mongodb://{auth}@192.168.0.9:27017")
-db = client.get_database("hplus_platform")
-table = db.get_collection("00_chat_qa_common")
 
 qa_idx = 0
 qa_total = 0
@@ -22,6 +16,7 @@ qa_filters = {}
 
 
 def copy_to_clipboard(question, prompt, source_docs):
+    import subprocess
     try:
         info = prompt.replace("{question}", question) if question and len(question) > 0 else prompt
         info = info.replace("{context}", source_docs) if source_docs and len(source_docs) > 0 else info
@@ -83,7 +78,7 @@ def load_qa(choice_hsp, qa_skip):
             qa['mark_6b12'] if 'mark_6b12' in qa else '', \
             qa['mark_6b13'] if 'mark_6b13' in qa else '', \
             qa['source_documents'] if 'source_documents' in qa else '', \
-            f"总数：{qa_total}", qa_idx+1, '', f"加载成功", \
+            qa_idx+1, '', f"加载成功", \
             qa['before_response_1'] if 'before_response_1' in qa else '', \
             qa['6b_resp0'] if '6b_resp0' in qa else '', \
             qa['6b_resp1'] if '6b_resp1' in qa else '', \
@@ -95,7 +90,7 @@ def load_qa(choice_hsp, qa_skip):
         print('ERROR: >>>>> ', e)
         return "prompt_template", "question", "response", \
             "cate1", "cate2", "cate3", "mark0", "mark4", "mark-6b0", "mark-6b1", "mark-6b11", "mark-6b12", "mark-6b13",\
-            "source_documents", f"总数：{qa_total}", qa_idx+1, '', f"无数据", \
+            "source_documents", qa_idx+1, '', f"无数据", \
             '', '', '', '', '', '', ''
 
 
@@ -187,6 +182,7 @@ def delete_qa(choice_hsp=None, question=None, prompt=None, answer=None, *args, *
 
 
 if __name__ == '__main__':
+    marks = ['OK', 'NO', 'MI', '']
     with gr.Blocks() as app:
         qa = table.find_one(qa_filters)
         qa_total = table.count_documents(qa_filters)
@@ -196,60 +192,92 @@ if __name__ == '__main__':
             qa = {}
 
         with gr.Row():
-            with gr.Column(scale=5):
+            with gr.Column(scale=8):
                 filter_box = gr.Textbox(label="筛选", value="{}", lines=1)
+                qa_idx_tbox = gr.Slider(value=qa_idx + 1, label='当前问答', minimum=1, maximum=qa_total,
+                                        info=f"问题总数：{qa_total}")
                 with gr.Row():
-                    guide = gr.Markdown(f"总数：{qa_total}")
-                    qa_idx_tbox = gr.Number(value=qa_idx + 1, label='当前问答')
                     prev_btn = gr.Button(" < 前一个")
                     next_btn = gr.Button("下一个 > ")
+                    refresh_btn = gr.Button("刷新问答")
+
+                question_textbox = gr.TextArea(label="问题", lines=1, value=qa['question'] if 'question' in qa else '')
                 with gr.Row():
                     cate1_tbox = gr.Textbox(value=qa['cate1'] if 'cate1' in qa else '', label='cate1')  # cate1
-                    mark0_tbox = gr.Textbox(value=qa['mark0'] if 'mark0' in qa else '', label='Mark0')  # mark0
-                    mark1_tbox = gr.Textbox(value=qa['mark1'] if 'mark4' in qa else '', label='Mark1')  # mark4
-                    mark2_tbox = gr.Textbox(value=qa['mark_6b0'] if 'mark_6b0' in qa else '', label='Mark 6B0')  # mark_6b0
-                    mark3_tbox = gr.Textbox(value=qa['mark_6b1'] if 'mark_6b1' in qa else '', label='Mark 6B1')  # mark_6b1
-                with gr.Row():
                     cate2_tbox = gr.Textbox(value=qa['cate2'] if 'cate2' in qa else '', label='cate2')  # cate2
                     cate3_tbox = gr.Textbox(value=qa['cate3'] if 'cate3' in qa else '', label='cate3')  # cate3
-                    mark4_tbox = gr.Textbox(value=qa['mark_6b11'] if 'mark_6b11' in qa else '', label='Mark 6B11')  # mark_6b11
-                    mark5_tbox = gr.Textbox(value=qa['mark_6b12'] if 'mark_6b12' in qa else '', label='Mark 6B12')  # mark_6b12
-                    mark6_tbox = gr.Textbox(value=qa['mark_6b13'] if 'mark_6b13' in qa else '', label='Mark 6B13')  # mark_6b13
 
                 with gr.Row():
-                    refresh_btn = gr.Button("刷新问答")
-                    modify_qa_btn = gr.Button("更新原问答", variant="primary")
-                    save_new_qa_btn = gr.Button(" + 保存新问答 ", variant='secondary')
-                    delete_qa_btn = gr.Button(" - 删除问答 ", variant='stop')
-                question_textbox = gr.TextArea(label="问题", lines=1, value=qa['question'] if 'question' in qa else '')
-                resp1_textbox = gr.TextArea(label="微调前回答2-6B", lines=1,
+                    with gr.Column(scale=9):
+                        resp1_textbox = gr.TextArea(label="微调前回答2-6B", lines=1,
                                             value=qa['6b_resp0'] if '6b_resp0' in qa else '')
-                resp2_textbox = gr.TextArea(label="微调后回答2-6BFB", lines=1,
+                    with gr.Column(scale=1):
+                        mark2_tbox = gr.Radio(choices=marks, value=qa['mark_6b0'] if 'mark_6b0' in qa else '',
+                                         label='Mark 6B0', min_width=10)  # mark_6b0
+                with gr.Row():
+                    with gr.Column(scale=8):
+                        resp2_textbox = gr.TextArea(label="微调后回答2-6BFB", lines=1,
                                             value=qa['6b_resp1'] if '6b_resp1' in qa else '')
-                resp3_textbox = gr.TextArea(label="微调后回答2-6B11", lines=1,
-                                            value=qa['6b_resp_11'] if '6b_resp_11' in qa else '')
-                resp4_textbox = gr.TextArea(label="微调后回答2-6B12", lines=1,
-                                            value=qa['6b_resp_12'] if '6b_resp_12' in qa else '')
-                resp5_textbox = gr.TextArea(label="微调后回答2-6B13", lines=1,
-                                            value=qa['6b_resp_13'] if '6b_resp_13' in qa else '')
-                resp6_textbox = gr.TextArea(label="微调后回答int4", lines=1,
-                                            value=qa['after_response_1'] if 'after_response_1' in qa else '')
+                    with gr.Column(scale=1):
+                        mark3_tbox = gr.Radio(choices=marks, value=qa['mark_6b1'] if 'mark_6b1' in qa else '',
+                                         label='Mark 6B1', min_width=20)  # mark_6b1
 
-            with gr.Column(scale=3):
+                with gr.Row():
+                    with gr.Column(scale=7):
+                        resp3_textbox = gr.TextArea(label="微调后回答2-6B11", lines=1,
+                                            value=qa['6b_resp_11'] if '6b_resp_11' in qa else '')
+                    with gr.Column(scale=1):
+                        mark4_tbox = gr.Radio(choices=marks, value=qa['mark_6b11'] if 'mark_6b11' in qa else '',
+                                         label='Mark 6B11', min_width=30)  # mark_6b11
+
+                with gr.Row():
+                    with gr.Column(scale=6):
+                        resp4_textbox = gr.TextArea(label="微调后回答2-6B12", lines=1,
+                                        value=qa['6b_resp_12'] if '6b_resp_12' in qa else '')
+                    with gr.Column(scale=1):
+                        mark5_tbox = gr.Radio(choices=marks, value=qa['mark_6b12'] if 'mark_6b12' in qa else '',
+                                         label='Mark 6B12', min_width=40)  # mark_6b12
+                with gr.Row():
+                    with gr.Column(scale=5):
+                        resp5_textbox = gr.TextArea(label="微调后回答2-6B13", lines=1,
+                                            value=qa['6b_resp_13'] if '6b_resp_13' in qa else '')
+                    with gr.Column(scale=1):
+                        mark6_tbox = gr.Radio(choices=marks, value=qa['mark_6b13'] if 'mark_6b13' in qa else '',
+                                         label='Mark 6B13')  # mark_6b13
+
+                with gr.Row():
+                    with gr.Column(scale=4):
+                        resp6_textbox = gr.TextArea(label="微调后回答int4", lines=1,
+                                            value=qa['after_response_1'] if 'after_response_1' in qa else '')
+                    with gr.Column(scale=1):
+                        mark1_tbox = gr.Radio(choices=marks, value=qa['mark1'] if 'mark1' in qa else '',
+                                         label='Mark1')  # mark4
+                with gr.Row():
+                    with gr.Column(scale=4):
+                        answer1_textbox = gr.TextArea(label="微调前回答", lines=1,
+                                                 value=qa['before_response_1'] if 'before_response_1' in qa else '')
+                    with gr.Column(scale=1):
+                        mark0_tbox = gr.Radio(choices=marks, value=qa['mark0'] if 'mark0' in qa else '',
+                                                 label='Mark0')  # mark0
+                modify_qa_btn = gr.Button("更新原问答", variant="primary")
+
+            with gr.Column(scale=2):
                 prompt_label = gr.TextArea(label="提示模板", lines=2,
                                            value=qa['prompt_template'] if 'prompt_template' in qa else '')
                 source_label = gr.TextArea(label="参考信息", lines=4,
                                            value=qa['source_documents'] if 'source_documents' in qa else '')
                 answer_textbox = gr.TextArea(label="标准回答", lines=1,
                                              value=qa['response'] if 'response' in qa else '')
-                answer1_textbox = gr.TextArea(label="微调前回答", lines=1,
-                                              value=qa['before_response_1'] if 'before_response_1' in qa else '')
+                save_new_qa_btn = gr.Button(" + 保存新问答 ", variant='secondary')
+
 
                 with gr.Row():
                     copy_btn = gr.Button("复制问题")
                     qa_btn = gr.Button("AI问答")
                 choice_hsp_dropdown = gr.Textbox(label="当前知识库", value="common")
                 ai_answer_textbox = gr.Textbox(label="AI问答", lines=1)
+                delete_qa_btn = gr.Button(" - 删除问答 ", variant='stop')
+
         gr.Markdown("**医院知识问答数据集编辑💰**: 医院通用知识. ")
         output_textbot = gr.Markdown("")
         inputs = [choice_hsp_dropdown, question_textbox, prompt_label, answer_textbox,
@@ -257,7 +285,7 @@ if __name__ == '__main__':
                   mark4_tbox, mark5_tbox, mark6_tbox, source_label]
         outputs = [prompt_label, question_textbox, answer_textbox, cate1_tbox, cate2_tbox, cate3_tbox,
                    mark0_tbox, mark1_tbox, mark2_tbox, mark3_tbox, mark4_tbox, mark5_tbox, mark6_tbox,
-                   source_label, guide, qa_idx_tbox, ai_answer_textbox, output_textbot, answer1_textbox,
+                   source_label, qa_idx_tbox, ai_answer_textbox, output_textbot, answer1_textbox,
                    resp4_textbox, resp5_textbox, resp6_textbox,
                    resp1_textbox, resp2_textbox, resp3_textbox]
 

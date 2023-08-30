@@ -4,7 +4,7 @@ import re
 
 auth = os.environ.get('usr+pwd')
 if auth is None or len(auth) == 0:
-    raise EnvironmentError("Please setup env params: [usr+pwd].  e.g: \nusr+pws=username:password")
+    raise EnvironmentError("Please setup env params: [usr+pwd].  e.g: \nusr+pwd=username:password")
 
 client = pymongo.MongoClient(f"mongodb://{auth}@192.168.0.9:27017")
 db = client.get_database("hplus_platform")
