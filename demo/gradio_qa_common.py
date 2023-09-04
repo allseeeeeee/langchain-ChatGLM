@@ -67,6 +67,9 @@ def load_qa(filter_json, qa_idx):
             qa['mark03_6bfb_3'] if 'mark03_6bfb_3' in qa else '',  # mark5
             qa['mark01_6bfb_1'] if 'mark01_6bfb_1' in qa else '',  # mark6
             qa['mark02_6bfb_1'] if 'mark02_6bfb_1' in qa else '',  # mark7
+            qa['mark04_6bi4_1'] if 'mark04_6bi4_1' in qa else '',  # mark8
+            qa['mark04_6bi4_2'] if 'mark04_6bi4_2' in qa else '',  # mark9
+            qa['mark04_6bi4_3'] if 'mark04_6bi4_3' in qa else '',  # mark10
             qa['source_documents'] if 'source_documents' in qa else '',  # source_label
             gr.Slider.update(value=min(qa_skip+1, total), maximum=total, info=f"问题总数： {total}"),
             gr.Textbox.update(value=str(qa['_id']), interactive=False),  # ObjectId
@@ -79,7 +82,10 @@ def load_qa(filter_json, qa_idx):
             qa['resp03_6bfb_2'] if 'resp03_6bfb_2' in qa else '',  # resp4_textbox
             qa['resp03_6bfb_3'] if 'resp03_6bfb_3' in qa else '',  # resp5_textbox
             qa['resp01_6bfb_1'] if 'resp01_6bfb_1' in qa else '',  # resp6_textbox
-            qa['resp02_6bfb_1'] if 'resp02_6bfb_1' in qa else ''   # resp7_textbox
+            qa['resp02_6bfb_1'] if 'resp02_6bfb_1' in qa else '',  # resp7_textbox
+            qa['resp04_6bi4_1'] if 'resp04_6bi4_1' in qa else '',  # resp8_textbox
+            qa['resp04_6bi4_2'] if 'resp04_6bi4_2' in qa else '',  # resp9_textbox
+            qa['resp04_6bi4_3'] if 'resp04_6bi4_3' in qa else '',  # resp10_textbox
             )
 
 
@@ -100,7 +106,7 @@ def load_qa_next(filter_json, qa_idx, *args, **kwargs):
 
 
 def modify_qa(qa_id=None, question=None, source=None, prompt=None, answer=None, cate1=None, cate2=None, cate3=None,
-              mark0=None, mark1=None, mark2=None, mark3=None, mark4=None, mark5=None, mark6=None, mark7=None,
+              mark0=None, mark1=None, mark2=None, mark3=None, mark4=None, mark5=None, mark6=None, mark7=None, mark8=None, mark9=None, mark10=None,
               *args, **kwargs):
     # 参数顺序参考 inputs 的定义
     print("modify_qa", qa_id, args, kwargs)
@@ -115,6 +121,9 @@ def modify_qa(qa_id=None, question=None, source=None, prompt=None, answer=None, 
                                                  'mark_6bi4_0': mark0,
                                                  'mark_6bfb_0': mark1,
                                                  'mark02_6bfb_4': mark2,
+                                                 'mark04_6bi4_1': mark8,
+                                                 'mark04_6bi4_2': mark9,
+                                                 'mark04_6bi4_3': mark10,
                                                  'mark03_6bfb_1': mark3,
                                                  'mark03_6bfb_2': mark4,
                                                  'mark03_6bfb_3': mark5,
@@ -195,6 +204,22 @@ if __name__ == '__main__':
                     with gr.Column(scale=1):
                         mark5_tbox = gr.Radio(choices=marks, value=qa['mark03_6bfb_3'] if 'mark03_6bfb_3' in qa else '', label='mark03_6bfb_3')
                 with gr.Row():
+                    with gr.Column(scale=5):
+                        resp8_tbox = gr.TextArea(label="微调后回答 resp04_6bi4_1", lines=1, value=qa['resp04_6bi4_1'] if 'resp04_6bi4_1' in qa else '')
+                    with gr.Column(scale=1):
+                        mark8_tbox = gr.Radio(choices=marks, value=qa['mark04_6bi4_1'] if 'mark04_6bi4_1' in qa else '', label='mark04_6bi4_1')
+                with gr.Row():
+                    with gr.Column(scale=5):
+                        resp9_tbox = gr.TextArea(label="微调后回答 resp04_6bi4_2", lines=1, value=qa['resp04_6bi4_2'] if 'resp04_6bi4_2' in qa else '')
+                    with gr.Column(scale=1):
+                        mark9_tbox = gr.Radio(choices=marks, value=qa['mark04_6bi4_2'] if 'mark04_6bi4_2' in qa else '', label='mark04_6bi4_2')
+                with gr.Row():
+                    with gr.Column(scale=5):
+                        resp10_tbox = gr.TextArea(label="微调后回答 resp04_6bi4_3", lines=1, value=qa['resp04_6bi4_3'] if 'resp04_6bi4_3' in qa else '')
+                    with gr.Column(scale=1):
+                        mark10_tbox = gr.Radio(choices=marks, value=qa['mark04_6bi4_3'] if 'mark04_6bi4_3' in qa else '', label='mark04_6bi4_3')
+
+                with gr.Row():
                     with gr.Column(scale=4):
                         resp6_tbox = gr.TextArea(label="微调后回答 resp01_6bfb_1", lines=1, value=qa['resp01_6bfb_1'] if 'resp01_6bfb_1' in qa else '')
                     with gr.Column(scale=1):
@@ -204,7 +229,6 @@ if __name__ == '__main__':
                         resp7_tbox = gr.TextArea(label="微调后回答 resp02_6bfb_1", lines=1, value=qa['resp02_6bfb_1'] if 'resp02_6bfb_1' in qa else '')
                     with gr.Column(scale=1):
                         mark7_tbox = gr.Radio(choices=marks, value=qa['mark02_6bfb_1'] if 'mark02_6bfb_1' in qa else '', label='mark02_6bfb_1')
-
                 with gr.Row():
                     with gr.Column(scale=4):
                         resp0_tbox = gr.TextArea(label="微调前回答", lines=1, value=qa['resp_6bi4_0'] if 'resp_6bi4_0' in qa else '')
@@ -237,19 +261,19 @@ if __name__ == '__main__':
         output_tbox = gr.Markdown("")
         inputs = [qa_id_tbox, question_textbox, source_label, prompt_label, answer_textbox,
                   cate1_tbox, cate2_tbox, cate3_tbox, mark0_tbox, mark1_tbox, mark2_tbox, mark3_tbox,
-                  mark4_tbox, mark5_tbox, mark6_tbox, mark7_tbox]
+                  mark4_tbox, mark5_tbox, mark6_tbox, mark7_tbox, mark8_tbox, mark9_tbox, mark10_tbox]
         outputs = [prompt_label, question_textbox, answer_textbox, cate1_tbox, cate2_tbox, cate3_tbox,
-                   mark0_tbox, mark1_tbox, mark2_tbox, mark3_tbox, mark4_tbox, mark5_tbox, mark6_tbox, mark7_tbox,
+                   mark0_tbox, mark1_tbox, mark2_tbox, mark3_tbox, mark4_tbox, mark5_tbox, mark6_tbox, mark7_tbox, mark8_tbox, mark9_tbox, mark10_tbox,
                    source_label, qa_idx_tbox, qa_id_tbox, ai_answer_tbox, output_tbox,
-                   resp0_tbox, resp1_tbox, resp2_tbox, resp3_tbox, resp4_tbox, resp5_tbox, resp6_tbox, resp7_tbox]
+                   resp0_tbox, resp1_tbox, resp2_tbox, resp3_tbox, resp4_tbox, resp5_tbox, resp6_tbox, resp7_tbox, resp8_tbox, resp9_tbox, resp10_tbox]
 
         inputs_refresh = [filter_box, qa_idx_tbox]
 
         qa_btn.click(fn=submit_qa, inputs=inputs, outputs=[ai_answer_tbox, source_label, output_tbox])
         copy_btn.click(fn=copy_to_clipboard, inputs=[question_textbox, prompt_label, source_label], outputs=output_tbox)
         qa_idx_tbox.change(fn=load_qa_jump, inputs=inputs_refresh, outputs=outputs)
-        refresh_btn.click(fn=load_qa, inputs=inputs_refresh, outputs=outputs)
-        refresh_btn2.click(fn=load_qa, inputs=inputs_refresh, outputs=outputs)
+        refresh_btn.click(fn=load_qa_jump, inputs=inputs_refresh, outputs=outputs)
+        refresh_btn2.click(fn=load_qa_jump, inputs=inputs_refresh, outputs=outputs)
         prev_btn.click(fn=load_qa_prev, inputs=inputs_refresh, outputs=outputs)
         next_btn.click(fn=load_qa_next, inputs=inputs_refresh, outputs=outputs)
 
