@@ -2,6 +2,7 @@
 # @Time    : 2023-02-15
 # @Author  : 罗景田
 # 此py主要说明：
+import json
 import os
 import re
 import random
@@ -68,12 +69,13 @@ def doc_hsp(hsp):
 医院类型：{hsp['hospital_type']}{hsp['primary_hsp_level']}{hsp['secondary_hsp_level']}
 医院地址：{hsp['province']}{hsp['city']}{hsp['district']}{hsp['address']}
 体检工作日：{hsp['work_day']}
-{item(hsp, 'desc_of_work_time', '体检工作时间')} {item(hsp, 'reception_deadline_per_day', '最晚到院时间')}
+{item(hsp, 'desc_of_work_time', '体检工作时间')}
 {item(hsp, 'reserve_notice', '体检须知')}
 {item(hsp, 'examination_notice_html', '体检注意事项')}
 {item(hsp, 'report_obtain_desc', '报告领取')}
 {item(hsp, 'days_of_generate_report', '报告出具天数')}
-电子报告：{hsp['days_of_generate_digital_report'] + hsp['view_digital_report_url'] if hsp['have_digital_report'] else '不提供' }
+电子报告：{hsp['days_of_generate_digital_report'] + hsp['view_digital_report_url'] 
+    if 'have_digital_report' in hsp and hsp['have_digital_report'] else '不提供' }
 {item(hsp, 'intro', '医院简介')}
 """
 
@@ -81,7 +83,7 @@ def doc_hsp(hsp):
 def export_hsp_info(hsp_code: str = None, path: str = 'data'):
     result_data = db.get_collection("hsp_hospital").find_one({'organization_code': hsp_code})
     print(doc_hsp(result_data))
-    file = f'{path}/{hsp_code}_info.txt'
+    file = f'{path}/hsp_info.json'
     with open(file, 'w', encoding='utf-8') as file_object:
         file_object.write(doc_hsp(result_data))
     pass
@@ -217,6 +219,20 @@ if __name__ == '__main__':
     # print(known_info[0][1])
     # context = re.sub(pattern, r"\1{context}\n\n\3", prompt)
     # print(context)
-    export_train()
+    # export_train()
     # max_qa_len()
+
+    hsps = ['YY0000309218060', 'YY0000309718060', '5CE26C5214C5D600015B086C', '5F9AABE780314A00010ABE5A',
+            '61D72086579353786F5DC4C2', 'YY0000314918065', '61CECB68C846237CD731E418', 'YY18405738180897',
+            'YY0000309018060', 'YY0000316518065', 'YY0000320918065', '5D392873B28AE10001512AFE',
+            '60E2C9C49782850455B8A3F1', 'YY0000342018065']
+    file = f'data/hsp_info.json'
+    with open(file, 'w', encoding='utf-8') as file_object:
+        for hsp in hsps:
+            result_data = db.get_collection("hsp_hospital").find_one({'organization_code': hsp})
+            hsp_info = doc_hsp(result_data)
+
+            file_object.write(json.dumps({"summary": hsp_info}, ensure_ascii=False) + '\n')
+
+
     pass

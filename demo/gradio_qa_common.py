@@ -61,17 +61,17 @@ def load_qa(filter_json, qa_idx):
             qa['cate3'] if 'cate3' in qa else '',
             qa['mark_6bi4_0'] if 'mark_6bi4_0' in qa else '',      # mark0
             qa['mark_6bfb_0'] if 'mark_6bfb_0' in qa else '',      # mark1
-            qa['mark02_6bfb_4'] if 'mark02_6bfb_4' in qa else '',  # mark2
-            qa['mark03_6bfb_1'] if 'mark03_6bfb_1' in qa else '',  # mark3
-            qa['mark03_6bfb_2'] if 'mark03_6bfb_2' in qa else '',  # mark4
-            qa['mark03_6bfb_3'] if 'mark03_6bfb_3' in qa else '',  # mark5
+            qa['mark02_6bfb_4'] if 'mark02_6bfb_4' in qa else 'OK',  # mark2
+            qa['mark03_6bfb_1'] if 'mark03_6bfb_1' in qa else 'OK',  # mark3
+            qa['mark03_6bfb_2'] if 'mark03_6bfb_2' in qa else 'NO',  # mark4
+            qa['mark03_6bfb_3'] if 'mark03_6bfb_3' in qa else 'NO',  # mark5
             qa['mark01_6bfb_1'] if 'mark01_6bfb_1' in qa else '',  # mark6
             qa['mark02_6bfb_1'] if 'mark02_6bfb_1' in qa else '',  # mark7
-            qa['mark04_6bi4_1'] if 'mark04_6bi4_1' in qa else '',  # mark8
-            qa['mark04_6bi4_2'] if 'mark04_6bi4_2' in qa else '',  # mark9
-            qa['mark04_6bi4_3'] if 'mark04_6bi4_3' in qa else '',  # mark10
+            qa['mark04_6bi4_1'] if 'mark04_6bi4_1' in qa else 'OK',  # mark8
+            qa['mark04_6bi4_2'] if 'mark04_6bi4_2' in qa else 'NO',  # mark9
+            qa['mark04_6bi4_3'] if 'mark04_6bi4_3' in qa else 'NO',  # mark10
             qa['source_documents'] if 'source_documents' in qa else '',  # source_label
-            gr.Slider.update(value=min(qa_skip+1, total), maximum=total, info=f"问题总数： {total}"),
+            gr.Slider.update(value=min(qa_skip+1, total), maximum=total, info=f"问题总数： {total} 当前：{round(qa_skip/total*100, 2)}%"),
             gr.Textbox.update(value=str(qa['_id']), interactive=False),  # ObjectId
             'ai_answer_textbox',
             "output_textbox: 加载成功",
@@ -163,7 +163,7 @@ if __name__ == '__main__':
         with gr.Row():
             with gr.Column(scale=8):
                 filter_box = gr.Textbox(label="筛选", value="{}", lines=1)
-                qa_idx_tbox = gr.Slider(value=1, label='当前问答', step=1, minimum=1, maximum=qa_total, info=f"问题总数：{qa_total}")
+                qa_idx_tbox = gr.Slider(value=1, label='当前问答', step=1, minimum=1, maximum=qa_total, info=f"问题总数：{qa_total}  当前：{round(1/qa_total*100, 2)}%")
                 with gr.Row():
                     with gr.Column(scale=9):
                         question_textbox = gr.TextArea(label="问题", lines=1, value=qa['question'] if 'question' in qa else '', show_copy_button=True)
@@ -257,8 +257,9 @@ if __name__ == '__main__':
                 ai_answer_tbox = gr.Textbox(label="AI问答", lines=1)
                 delete_qa_btn = gr.Button(" - 删除问答 ", variant='stop')
 
-        gr.Markdown("**医院知识问答数据集编辑💰**: 医院通用知识. ")
         output_tbox = gr.Markdown("")
+        gr.Markdown("**医院知识问答数据集编辑💰**: 医院通用知识. ")
+
         inputs = [qa_id_tbox, question_textbox, source_label, prompt_label, answer_textbox,
                   cate1_tbox, cate2_tbox, cate3_tbox, mark0_tbox, mark1_tbox, mark2_tbox, mark3_tbox,
                   mark4_tbox, mark5_tbox, mark6_tbox, mark7_tbox, mark8_tbox, mark9_tbox, mark10_tbox]
@@ -282,5 +283,5 @@ if __name__ == '__main__':
         save_new_qa_btn.click(fn=save_new_qa, inputs=inputs_refresh + inputs, outputs=outputs)
         delete_qa_btn.click(fn=delete_qa, inputs=[qa_id_tbox] + inputs_refresh, outputs=outputs)
 
-    app.launch(server_name="0.0.0.0", server_port=7861)
+    app.launch(server_name="localhost", server_port=7861)
 
