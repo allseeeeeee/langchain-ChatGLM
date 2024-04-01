@@ -4,15 +4,15 @@ import json
 import asyncio
 from server.agent import model_container
 
-async def search_knowledge_base_iter(database: str, query: str) -> str:
+async def search_knowledge_base_iter(database: str, query: str, model_name: str) -> str:
     response = await knowledge_base_chat(query=query,
                                          knowledge_base_name=database,
-                                         model_name=model_container.MODEL.model_name,
+                                         model_name=model_name or model_container.MODEL.model_name,
                                          temperature=0.01,
                                          history=[],
                                          top_k=VECTOR_SEARCH_TOP_K,
                                          max_tokens=MAX_TOKENS,
-                                         prompt_name="knowledge_base_chat",
+                                         prompt_name="text",
                                          score_threshold=SCORE_THRESHOLD,
                                          stream=False)
 
@@ -23,10 +23,10 @@ async def search_knowledge_base_iter(database: str, query: str) -> str:
         docs = data["docs"]
     return contents
 
-def search_knowledgebase_simple(query: str):
-    return asyncio.run(search_knowledge_base_iter(query))
+def search_knowledgebase_simple(kb: str, query: str, **kwargs):
+    return asyncio.run(search_knowledge_base_iter(kb, query, **kwargs))
 
 
 if __name__ == "__main__":
-    result = search_knowledgebase_simple("大数据男女比例")
+    result = search_knowledgebase_simple('samples', "大数据男女比例", model_name="bge-large-zh-v1.5")
     print("答案:",result)
