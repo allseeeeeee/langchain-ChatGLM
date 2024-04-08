@@ -7,7 +7,7 @@ from server.knowledge_base.utils import get_file_path, LOADER_DICT
 from server.knowledge_base.kb_service.base import get_kb_details, get_kb_file_details
 from typing import Literal, Dict, Tuple
 from configs import (kbs_config,
-                     EMBEDDING_MODEL, DEFAULT_VS_TYPE,
+                     EMBEDDING_MODEL, MODEL_PATH, DEFAULT_VS_TYPE,
                      CHUNK_SIZE, OVERLAP_SIZE, ZH_TITLE_ENHANCE)
 from server.utils import list_embed_models, list_online_embed_models
 import os
@@ -108,6 +108,8 @@ def knowledge_base_page(api: ApiRequest, is_lite: bool = None):
 
             if is_lite:
                 embed_models = list_online_embed_models()
+                if EMBEDDING_MODEL not in embed_models:
+                    embed_models.append(EMBEDDING_MODEL)
             else:
                 embed_models = list_embed_models() + list_online_embed_models()
 
